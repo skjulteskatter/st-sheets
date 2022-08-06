@@ -5,7 +5,7 @@
             :title="title"
             v-model:show="showModal"
         >
-            <div class="grid grid-cols-10">
+            <div class="grid grid-cols-5 md:grid-cols-10">
                 <button v-for="song in songs" class="hover:bg-slate-900 m-2 border-slate-600 border border-solid h-12 w-12" @click="setSong(song)">
                     {{ song.getNumber(collectionId) }}
                 </button>
