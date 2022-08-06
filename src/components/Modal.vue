@@ -9,7 +9,7 @@
         </button>
         <div
             v-if="show"
-            class="fixed overflow-y-scroll top-0 right-0 left-0 z-50 w-full md:inset-0 justify-center content-center"
+            class="fixed overflow-y-scroll h-full left-0 top-0 z-50 w-full md:inset-0 justify-center content-center"
         >
             <div class="p-4 items-center w-full md:h-auto">
                 <!-- Modal content -->
