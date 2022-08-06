@@ -1,5 +1,5 @@
 <template>
-    <div class="font-sans bg-black" v-if="ready">
+    <div class="font-sans bg-black text-white" v-if="ready">
         <div v-if="authenticated">
             <Suspense>
                 <template #default>
@@ -11,7 +11,7 @@
             </Suspense>
         </div>
         <div v-else>
-            <button @click="login">Login</button>
+            <button @click="login" class="m-8 border p-2 text-xl">Login</button>
         </div>
     </div>
 </template>
