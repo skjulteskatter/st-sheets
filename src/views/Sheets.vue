@@ -29,9 +29,7 @@
                         :transposition="transposition ?? '0'"
                     ></SheetViewer>
                 </template>
-                <template #fallback>
-                    Loading...
-                </template>
+                <template #fallback> Loading... </template>
             </Suspense>
         </div>
     </div>
@@ -54,37 +52,37 @@ const collectionId = computed({
         if (v) {
             localStorage.setItem("collection", v);
         } else {
-            localStorage.removeItem("collection")
+            localStorage.removeItem("collection");
         }
     },
 });
 
-const _transposition = ref(localStorage.getItem("transposition"))
+const _transposition = ref(localStorage.getItem("transposition"));
 const transposition = computed({
     get() {
         return _transposition.value;
     },
     set(v) {
-        _transposition.value = v
+        _transposition.value = v;
         if (v) {
             localStorage.setItem("transposition", v);
         } else {
-            localStorage.removeItem("transposition")
+            localStorage.removeItem("transposition");
         }
     },
 });
 
-const _song = ref(localStorage.getItem("song"))
+const _song = ref(localStorage.getItem("song"));
 const song = computed({
     get() {
-        return _song.value
+        return _song.value;
     },
     set(v) {
         _song.value = v;
         if (v) {
             localStorage.setItem("song", v);
         } else {
-            localStorage.removeItem("song")
+            localStorage.removeItem("song");
         }
     },
 });

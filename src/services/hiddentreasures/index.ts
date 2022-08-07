@@ -4,4 +4,10 @@ import songService from "./songService";
 import sheetService from "./sheetService";
 import fileService from "./fileService";
 
-export { collectionService, contributorService, songService, sheetService, fileService };
+export {
+    collectionService,
+    contributorService,
+    songService,
+    sheetService,
+    fileService,
+};

@@ -1,12 +1,13 @@
 <template>
     <div>
         <label>Song</label>
-        <Modal
-            :title="title"
-            v-model:show="showModal"
-        >
+        <Modal :title="title" v-model:show="showModal">
             <div class="grid grid-cols-5 md:grid-cols-10">
-                <button v-for="song in songs" class="hover:bg-slate-900 m-2 border-slate-600 border border-solid h-12 w-12" @click="setSong(song)">
+                <button
+                    v-for="song in songs"
+                    class="hover:bg-slate-900 m-2 border-slate-600 border border-solid h-12 w-12"
+                    @click="setSong(song)"
+                >
                     {{ song.getNumber(collectionId) }}
                 </button>
             </div>
@@ -30,32 +31,35 @@ const emit = defineEmits<{
 
 const sort = (songs: Song[]) => {
     return songs.sort((a, b) => {
-        return (a.getNumber(props.collectionId) ?? 0) - (b.getNumber(props.collectionId) ?? 0)
-    })
-}
+        return (
+            (a.getNumber(props.collectionId) ?? 0) -
+            (b.getNumber(props.collectionId) ?? 0)
+        );
+    });
+};
 
 const showModal = ref(false);
 
 const songs = ref(sort(await songService.childrenOf(props.collectionId)));
 
 const title = computed(() => {
-    const song = songs.value.find(i => i.id === props.song)
+    const song = songs.value.find((i) => i.id === props.song);
     if (!song) {
-        return "Select song"
+        return "Select song";
     }
     return song.getNumber(props.collectionId) + " - " + song.title;
-})
+});
 
 const setSong = (song: Song) => {
-    emit("update:song", song.id)
+    emit("update:song", song.id);
     showModal.value = false;
     title.effect.run();
-}
+};
 
 watch(
     () => props.collectionId,
     async (first) => {
-        songs.value = sort(await songService.childrenOf(first))
+        songs.value = sort(await songService.childrenOf(first));
     }
 );
 </script>

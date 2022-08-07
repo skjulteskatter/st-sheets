@@ -1,29 +1,29 @@
 <template>
-    <div id="svg-viewer" v-html="svg">
-
-    </div>
+    <div id="svg-viewer" v-html="svg"></div>
 </template>
 <script lang="ts" setup>
-import { watch, onMounted, onUpdated } from 'vue';
-
+import { watch, onMounted, onUpdated } from "vue";
 
 const props = defineProps<{
-    svg: string
-}>()
+    svg: string;
+}>();
 
 const fixElements = () => {
-    const els = document.getElementById("svg-viewer")?.children
+    const els = document.getElementById("svg-viewer")?.children;
 
-    if (!els) return
+    if (!els) return;
 
     for (let i = 0; i < els.length; i++) {
-        const el = els.item(i) as HTMLElement
-        el.removeAttribute("width")
-        el.removeAttribute("height")
+        const el = els.item(i) as HTMLElement;
+        el.removeAttribute("width");
+        el.removeAttribute("height");
     }
-}
+};
 
-onMounted(() => setTimeout(fixElements, 10))
+onMounted(() => setTimeout(fixElements, 10));
 
-watch(() => props.svg, () => setTimeout(fixElements, 10))
+watch(
+    () => props.svg,
+    () => setTimeout(fixElements, 10)
+);
 </script>

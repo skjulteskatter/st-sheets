@@ -26,7 +26,7 @@ const transpositions: {
     {
         key: 4,
         display: "Ab",
-        alias: ["G#"]
+        alias: ["G#"],
     },
     {
         key: 3,
@@ -35,11 +35,11 @@ const transpositions: {
     {
         key: 2,
         display: "Bb",
-        alias: ["A#"]
+        alias: ["A#"],
     },
     {
         key: 1,
-        display: "B"
+        display: "B",
     },
     {
         key: 0,
@@ -48,16 +48,16 @@ const transpositions: {
     {
         key: -1,
         display: "Db",
-        alias: ["C#"]
+        alias: ["C#"],
     },
     {
         key: -2,
-        display: "D"
+        display: "D",
     },
     {
         key: 9,
         display: "Eb",
-        alias: ["D#"]
+        alias: ["D#"],
     },
     {
         key: 8,
@@ -70,7 +70,7 @@ const transpositions: {
     {
         key: 6,
         display: "F#",
-        alias: ["Gb"]
+        alias: ["Gb"],
     },
     {
         key: 5,

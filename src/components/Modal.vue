@@ -5,7 +5,7 @@
             type="button"
             @click="emit('update:show', !show)"
         >
-            {{title}}
+            {{ title }}
         </button>
         <div
             v-if="show"
@@ -21,7 +21,7 @@
                         <h3
                             class="text-xl font-semibold text-gray-900 dark:text-white"
                         >
-                            {{title}}
+                            {{ title }}
                         </h3>
                         <button
                             type="button"
@@ -63,15 +63,15 @@
 </template>
 <script lang="ts" setup>
 defineProps<{
-    title: string
-    show: boolean
-}>()
+    title: string;
+    show: boolean;
+}>();
 
 const emit = defineEmits<{
-    (e: "update:show", v: boolean): void
-}>()
+    (e: "update:show", v: boolean): void;
+}>();
 
 const close = () => {
-    emit("update:show", false)
-}
+    emit("update:show", false);
+};
 </script>
