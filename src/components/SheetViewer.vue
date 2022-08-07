@@ -3,18 +3,27 @@
         <div v-if="svg">
             <SvgViewer :svg="svg"></SvgViewer>
         </div>
-        <div v-else-if="sheets">
-            <div v-for="sheet in sheets">
-                {{ sheet.name }}
+        <div v-else-if="sheets.length > 1">
+            <div
+                class="cursor-pointer border m-4 p-2"
+                v-for="sheet in sheets"
+                @click="renderSheet(sheet.id)"
+            >
+                {{ sheet.category }}
             </div>
+        </div>
+        <div v-else class="grid h-screen place-items-center">
+            <DotsCircleHorizontalIcon
+                class="animate-spin h-16"
+            ></DotsCircleHorizontalIcon>
         </div>
     </div>
 </template>
 <script lang="ts" setup>
-import { IMediaFile } from "hiddentreasures-js";
 import { ref, watch } from "vue";
 import { sheetService, fileService } from "../services/hiddentreasures";
 import SvgViewer from "./SvgViewer.vue";
+import { DotsCircleHorizontalIcon } from "@heroicons/vue/outline";
 
 const props = defineProps<{
     songId: string;
@@ -28,35 +37,30 @@ const getSheets = async () => {
 
 const svg = ref(null as string | null);
 
-const renderSheet = async () => {
-    if (sheet.value) {
-        const svgs = await sheetService.render({
-            id: sheet.value.id,
-            transposition: parseInt(props.transposition),
-        });
+const renderSheet = async (sheetId: string) => {
+    sheets.value = [];
+    const svgs = await sheetService.render({
+        id: sheetId,
+        transposition: parseInt(props.transposition),
+    });
 
-        svg.value = svgs.join("\n");
-    }
+    svg.value = svgs.join("\n");
 };
 
 const sheets = ref(await getSheets());
-const sheet = ref(null as IMediaFile | null);
 
-const checkSheets = () => {
-    if (sheets.value.length === 1) {
-        sheet.value = sheets.value[0];
-        renderSheet();
-    }
-};
-checkSheets();
+if (sheets.value.length === 1) {
+    renderSheet(sheets.value[0].id);
+}
 
 watch(
     () => props.songId,
-    async (s) => {
+    async () => {
         svg.value = null;
-        sheet.value = null;
         sheets.value = await getSheets();
-        checkSheets();
+        if (sheets.value.length === 1) {
+            renderSheet(sheets.value[0].id);
+        }
     }
 );
 </script>

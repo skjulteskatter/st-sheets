@@ -2,7 +2,7 @@
     <div id="svg-viewer" v-html="svg"></div>
 </template>
 <script lang="ts" setup>
-import { watch, onMounted, onUpdated } from "vue";
+import { watch, onMounted } from "vue";
 
 const props = defineProps<{
     svg: string;

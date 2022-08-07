@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+    "@heroicons/vue": ^1.0.6
     "@vitejs/plugin-vue": ^3.0.0
     autoprefixer: ^10.4.8
     firebase: ^9.9.2
@@ -14,6 +15,7 @@ specifiers:
     vue-tsc: ^0.38.4
 
 dependencies:
+    "@heroicons/vue": 1.0.6_vue@3.2.37
     firebase: 9.9.2
     hiddentreasures-js: 1.5.7
     vue: 3.2.37
@@ -719,6 +721,17 @@ packages:
             long: 4.0.0
             protobufjs: 7.0.0
             yargs: 16.2.0
+        dev: false
+
+    /@heroicons/vue/1.0.6_vue@3.2.37:
+        resolution:
+            {
+                integrity: sha512-ng2YcCQrdoQWEFpw+ipFl2rZo8mZ56v0T5+MyfQQvNqfKChwgP6DMloZLW+rl17GEcHkE3H82UTAMKBKZr4+WA==,
+            }
+        peerDependencies:
+            vue: ">= 3"
+        dependencies:
+            vue: 3.2.37
         dev: false
 
     /@nodelib/fs.scandir/2.1.5:
