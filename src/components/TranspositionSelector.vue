@@ -18,18 +18,63 @@
 import { defineEmits } from "vue";
 import BaseSelect from "./BaseSelect.vue";
 
-const transpositions = [
+const transpositions: {
+    key: number;
+    display: string;
+    alias?: string[];
+}[] = [
     {
-        key: "+2",
-        display: "Bb",
+        key: 4,
+        display: "Ab",
+        alias: ["G#"]
     },
     {
-        key: "0",
+        key: 3,
+        display: "A",
+    },
+    {
+        key: 2,
+        display: "Bb",
+        alias: ["A#"]
+    },
+    {
+        key: 1,
+        display: "B"
+    },
+    {
+        key: 0,
         display: "C",
     },
     {
-        key: "+9",
+        key: -1,
+        display: "Db",
+        alias: ["C#"]
+    },
+    {
+        key: -2,
+        display: "D"
+    },
+    {
+        key: 9,
         display: "Eb",
+        alias: ["D#"]
+    },
+    {
+        key: 8,
+        display: "E",
+    },
+    {
+        key: 7,
+        display: "F",
+    },
+    {
+        key: 6,
+        display: "F#",
+        alias: ["Gb"]
+    },
+    {
+        key: 5,
+        display: "G",
     },
 ];
 
