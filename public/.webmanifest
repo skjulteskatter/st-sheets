@@ -1,0 +1,17 @@
+{
+    "short_name": "Sheets",
+    "name": "SongTreasures - Sheets",
+    "icons": [
+      {
+        "src": "/st.ico",
+        "type": "image/ico",
+        "sizes": "192x192"
+      }
+    ],
+    "start_url": "/",
+    "background_color": "#3367D6",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#3367D6",
+    "description": "A sheet viewer for SongTreasures"
+  }

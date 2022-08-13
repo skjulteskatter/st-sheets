@@ -1,7 +1,7 @@
 <template>
     <div>
-        <div v-if="svg">
-            <SvgViewer :svg="svg"></SvgViewer>
+        <div v-if="svg" class="w-full content-center">
+            <SvgViewer class="max-w-4xl ml-auto mr-auto" :svg="svg"></SvgViewer>
         </div>
         <div v-else-if="sheets.length > 1">
             <div
