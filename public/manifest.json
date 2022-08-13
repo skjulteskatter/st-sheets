@@ -4,8 +4,8 @@
     "icons": [
       {
         "src": "/st.ico",
-        "type": "image/ico",
-        "sizes": "192x192"
+        "type": "image/png",
+        "sizes": "32x32"
       }
     ],
     "start_url": "/",
