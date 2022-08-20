@@ -5,8 +5,7 @@
         >
         <BaseSelect
             id="collection-id-select"
-            :value="collection"
-            @input="(e: Event) => $emit('update:collection', (e.target as HTMLSelectElement)?.value)"
+            v-model="selectedCollection"
             placeholder="Collection..."
         >
             <option v-for="col in collections" :value="col.id">
@@ -16,6 +15,7 @@
     </div>
 </template>
 <script lang="ts" setup>
+import { computed } from "vue";
 import { collectionService } from "../services/hiddentreasures";
 import BaseSelect from "./BaseSelect.vue";
 
@@ -23,11 +23,20 @@ const collections = (await collectionService.list()).filter(
     (i) => i.type === "song"
 );
 
-defineProps<{
+const props = defineProps<{
     collection: string | null;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     (e: "update:collection", value: string | null): void;
 }>();
+
+const selectedCollection = computed({
+    get() {
+        return props.collection
+    },
+    set(v) {
+        emit("update:collection", v)
+    }
+})
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <div class="font-sans bg-black text-white" v-if="ready">
+    <div class="font-sans h-screen w-screen bg-white dark:bg-black dark:text-white" v-if="ready">
         <div v-if="authenticated">
             <Suspense>
                 <template #default>
@@ -28,10 +28,9 @@ auth.onStateUpdate(() => {
     authenticated.value = auth.authenticated;
 });
 
+if (localStorage.getItem("theme") === "dark") {
+    document.documentElement.classList.add("dark")
+}
+
 const login = auth.login;
 </script>
-<style>
-:root {
-    background-color: black;
-}
-</style>
