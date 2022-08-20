@@ -17,6 +17,10 @@
 <script lang="ts" setup>
 import BaseSelect from "./BaseSelect.vue";
 
+const getTranspositions = (relative?: string) => {
+    return transpositions
+}
+
 const transpositions: {
     key: number;
     display: string;
@@ -77,8 +81,9 @@ const transpositions: {
     },
 ];
 
-defineProps<{
+const props = defineProps<{
     transposition: string | null;
+    relative?: string | null;
 }>();
 
 defineEmits<{

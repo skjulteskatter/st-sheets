@@ -1,5 +1,26 @@
 <template>
-    <div>
+    <div class="max-w-4xl ml-auto mr-auto">
+        <div class="flex m-4 gap-4">
+            <div>
+                <label>Key</label>
+                <BaseButton class="w-full">
+                    {{song.originalKey}}
+                </BaseButton>
+            </div>
+            <div>
+                <label>Verses</label>
+                <BaseButton class="w-full">
+                    {{song.verses}}
+                </BaseButton>
+            </div>
+            <div class="max-w-sm" v-if="currentSheet">
+                <TranspositionSelector
+                    :transposition="currentTransposition"
+                    :relative="song.originalKey"
+                    @update:transposition="transpose"
+                ></TranspositionSelector>
+            </div>
+        </div>
         <div v-if="svg" class="w-full content-center">
             <SvgViewer class="max-w-4xl ml-auto mr-auto" :svg="svg"></SvgViewer>
         </div>
@@ -21,9 +42,11 @@
 </template>
 <script lang="ts" setup>
 import { ref, watch } from "vue";
-import { sheetService, fileService } from "../services/hiddentreasures";
+import { sheetService, fileService, songService } from "../services/hiddentreasures";
 import SvgViewer from "./SvgViewer.vue";
 import { DotsCircleHorizontalIcon } from "@heroicons/vue/outline";
+import TranspositionSelector from "./TranspositionSelector.vue";
+import BaseButton from "./BaseButton.vue";
 
 const props = defineProps<{
     songId: string;
@@ -35,29 +58,40 @@ const getSheets = async () => {
     return files.filter((f) => f.type === "sheetmusic");
 };
 
+const currentTransposition = ref(props.transposition)
+
+const song = ref(await songService.get(props.songId))
 const svg = ref(null as string | null);
+const sheets = ref(await getSheets());
+const currentSheet = ref(null as string | null)
 
 const renderSheet = async (sheetId: string) => {
+    currentSheet.value = sheetId;
     sheets.value = [];
     const svgs = await sheetService.render({
         id: sheetId,
-        transposition: parseInt(props.transposition),
+        transposition: parseInt(currentTransposition.value),
     });
 
     svg.value = svgs.join("\n");
 };
 
-const sheets = ref(await getSheets());
-
 if (sheets.value.length === 1) {
     renderSheet(sheets.value[0].id);
 }
 
+const transpose = async (t: string | null) => {
+    currentTransposition.value = t ?? '0'; 
+    await renderSheet(currentSheet.value ?? '');
+}
+
 watch(
-    () => props.songId,
+    () => [props.songId, props.transposition],
     async () => {
+        currentTransposition.value = props.transposition
         svg.value = null;
         sheets.value = await getSheets();
+        song.value = await songService.get(props.songId)
         if (sheets.value.length === 1) {
             renderSheet(sheets.value[0].id);
         }

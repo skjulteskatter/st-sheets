@@ -1,14 +1,14 @@
 <template>
     <div>
-        <div class="m-4 grid grid-cols-4 dark:text-white">
+        <div class="m-4 w-full flex dark:text-white">
             <CollectionSelector
                 class="ml-2 flex-col-1"
                 v-model:collection="collectionId"
             ></CollectionSelector>
-            <TranspositionSelector
+            <!-- <TranspositionSelector
                 class="ml-2"
                 v-model:transposition="transposition"
-            ></TranspositionSelector>
+            ></TranspositionSelector> -->
             <Suspense v-if="collectionId">
                 <template #default>
                     <SongSelector
@@ -20,7 +20,13 @@
                 </template>
                 <template #fallback> Loading... </template>
             </Suspense>
+            <div></div>
         </div>
+        <Settings
+            class="fixed top-0 right-0 p-8"
+            v-model:transposition="transposition"
+        >
+        </Settings>
         <div>
             <Suspense v-if="song">
                 <template #default>
@@ -40,6 +46,7 @@ import TranspositionSelector from "../components/TranspositionSelector.vue";
 import CollectionSelector from "../components/CollectionSelector.vue";
 import SongSelector from "../components/SongSelector.vue";
 import SheetViewer from "../components/SheetViewer.vue";
+import Settings from "../components/Settings.vue";
 
 const _collectionId = ref(localStorage.getItem("collection"));
 const collectionId = computed({
