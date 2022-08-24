@@ -4,6 +4,7 @@ import {
     GoogleAuthProvider,
     onAuthStateChanged,
     signInWithPopup,
+    signOut,
 } from "firebase/auth";
 import { firebaseConfig } from "../config";
 
@@ -35,6 +36,10 @@ export class Auth {
 
     login() {
         signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+    }
+
+    logout() {
+        signOut(firebaseAuth)
     }
 
     async getToken() {

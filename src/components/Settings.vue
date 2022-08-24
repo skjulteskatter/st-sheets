@@ -29,6 +29,12 @@
                     </BaseSelect>
                 </div>
             </div>
+            <template #footer>
+                <div class="ml-auto flex">
+                    <BaseButton @click="show = false" class="mr-2">Cancel</BaseButton>
+                    <BaseButton type="error" @click="logout">Logout</BaseButton>
+                </div>
+            </template>
         </Modal>
     </div>
 </template>
@@ -38,6 +44,8 @@ import { CogIcon } from "@heroicons/vue/solid"
 import Modal from './Modal.vue';
 import BaseSelect from './BaseSelect.vue';
 import InstrumentSelector from './InstrumentSelector.vue';
+import BaseButton from './BaseButton.vue';
+import auth from "../services/auth"
 
 const show = ref(false)
 
@@ -69,4 +77,5 @@ const selectedTheme = computed({
     }
 })
 
+const logout = auth.logout
 </script>
