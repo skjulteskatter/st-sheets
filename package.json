@@ -11,7 +11,7 @@
         "deploy": "firebase deploy --only hosting:st-sheets"
     },
     "dependencies": {
-        "@heroicons/vue": "^1.0.6",
+        "@heroicons/vue": "^2.0.0",
         "firebase": "^9.9.2",
         "hiddentreasures-js": "^1.5.7",
         "vue": "^3.2.37"

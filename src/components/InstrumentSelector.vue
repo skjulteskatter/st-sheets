@@ -1,18 +1,11 @@
 <template>
-    <div>
-        <label for="transposition-select"
-            >Transposition</label
-        >
-        <BaseSelect
-            id="transposition-select"
-            v-model="selectedTransposition"
-        >
-            <option v-for="t of transpositions" :value="t.key">
-                {{ t.display }}
-            </option>
-        </BaseSelect>
-    </div>
+    <BaseSelect label="Transposition" v-model="selectedTransposition">
+        <option v-for="t of transpositions" :value="t.key">
+            {{ t.display }}
+        </option>
+    </BaseSelect>
 </template>
+
 <script lang="ts" setup>
 import { computed } from "vue";
 import BaseSelect from "./BaseSelect.vue";
@@ -88,11 +81,10 @@ const emit = defineEmits<{
 
 const selectedTransposition = computed({
     get() {
-        return props.transposition
+        return props.transposition;
     },
     set(v) {
-        emit("update:transposition", v?.toString() ?? null)
-    }
-})
-
+        emit("update:transposition", v?.toString() ?? null);
+    },
+});
 </script>

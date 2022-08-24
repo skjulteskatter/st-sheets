@@ -1,18 +1,9 @@
 <template>
-    <div>
-        <label for="collection-id-select" class="dark:text-white"
-            >Collection</label
-        >
-        <BaseSelect
-            id="collection-id-select"
-            v-model="selectedCollection"
-            placeholder="Collection..."
-        >
-            <option v-for="col in collections" :value="col.id">
-                {{ col.title }}
-            </option>
-        </BaseSelect>
-    </div>
+    <BaseSelect label="Collection" v-model="selectedCollection">
+        <option v-for="col in collections" :value="col.id">
+            {{ col.title }}
+        </option>
+    </BaseSelect>
 </template>
 <script lang="ts" setup>
 import { computed } from "vue";
@@ -33,10 +24,10 @@ const emit = defineEmits<{
 
 const selectedCollection = computed({
     get() {
-        return props.collection
+        return props.collection;
     },
     set(v) {
-        emit("update:collection", v)
-    }
-})
+        emit("update:collection", v);
+    },
+});
 </script>

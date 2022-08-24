@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@heroicons/vue': ^1.0.6
+  '@heroicons/vue': ^2.0.0
   '@vitejs/plugin-vue': ^3.0.0
   autoprefixer: ^10.4.8
   firebase: ^9.9.2
@@ -16,7 +16,7 @@ specifiers:
   vue-tsc: ^0.38.4
 
 dependencies:
-  '@heroicons/vue': 1.0.6_vue@3.2.37
+  '@heroicons/vue': 2.0.4_vue@3.2.37
   firebase: 9.9.2
   hiddentreasures-js: 1.5.7
   vue: 3.2.37
@@ -27,7 +27,7 @@ devDependencies:
   firebase-tools: 11.6.0
   postcss: 8.4.14
   prettier: 2.7.1
-  tailwindcss: 3.1.8
+  tailwindcss: 3.1.8_postcss@8.4.14
   typescript: 4.7.4
   vite: 3.0.4
   vue-tsc: 0.38.9_typescript@4.7.4
@@ -645,8 +645,8 @@ packages:
       protobufjs: 7.0.0
       yargs: 16.2.0
 
-  /@heroicons/vue/1.0.6_vue@3.2.37:
-    resolution: {integrity: sha512-ng2YcCQrdoQWEFpw+ipFl2rZo8mZ56v0T5+MyfQQvNqfKChwgP6DMloZLW+rl17GEcHkE3H82UTAMKBKZr4+WA==}
+  /@heroicons/vue/2.0.4_vue@3.2.37:
+    resolution: {integrity: sha512-HxmYIA4oL1ZP4b7IKGIjvVYct3zEJEtsnYlR9GIzdxn1dBpOBx2aR43V6Vrhb4wkSs0eOxFQHIm05md+fnL/kA==}
     peerDependencies:
       vue: '>= 3'
     dependencies:
@@ -1007,8 +1007,10 @@ packages:
     dev: true
     optional: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.11.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -2409,7 +2411,7 @@ packages:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 9.0.9
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       body-parser: 1.20.0
       content-type: 1.0.4
       deep-freeze: 0.0.1
@@ -5325,10 +5327,12 @@ packages:
     resolution: {integrity: sha512-y3JaeRSplks6NYQuCOj3ZFMO3j60rTwbuKCvZxsAraGYH2epusatvZ0baZYA01WsGqJBq/Dl6vOrMUJqyMj8kA==}
     dev: true
 
-  /tailwindcss/3.1.8:
+  /tailwindcss/3.1.8_postcss@8.4.14:
     resolution: {integrity: sha512-YSneUCZSFDYMwk+TGq8qYFdCA3yfBRdBlS7txSq0LUmzyeqRe3a8fBQzbz9M3WS/iFT4BNf/nmw9mEzrnSaC0g==}
     engines: {node: '>=12.13.0'}
     hasBin: true
+    peerDependencies:
+      postcss: ^8.0.9
     dependencies:
       arg: 5.0.2
       chokidar: 3.5.3

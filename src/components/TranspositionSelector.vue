@@ -1,23 +1,21 @@
 <template>
-    <div>
-        <label class="text-white" for="transposition-select"
-            >Transposition</label
+    <BaseSelect label="Transposition" v-model="selectedTransposition">
+        <option
+            v-for="t of transposer.getRelativeTranspositions(
+                original ?? 'C',
+                relative,
+                true
+            )"
+            :value="t.value.toString()"
         >
-        <BaseSelect
-            id="transposition-select"
-            v-model="selectedTransposition"
-        >
-            <option v-for="t of transposer.getRelativeTranspositions(original ?? 'C', relative, true)" :value="t.value.toString()">
-                {{ t.view }}
-            </option>
-        </BaseSelect>
-    </div>
+            {{ t.view }}
+        </option>
+    </BaseSelect>
 </template>
 <script lang="ts" setup>
 import { computed } from "vue";
 import BaseSelect from "./BaseSelect.vue";
 import { transposer } from "../services/transposer";
-
 
 const props = defineProps<{
     transposition: string | null;
@@ -31,11 +29,10 @@ const emit = defineEmits<{
 
 const selectedTransposition = computed({
     get() {
-        return props.transposition
+        return props.transposition;
     },
     set(v) {
-        emit("update:transposition", v?.toString() ?? null)
-    }
-})
-
+        emit("update:transposition", v?.toString() ?? null);
+    },
+});
 </script>
