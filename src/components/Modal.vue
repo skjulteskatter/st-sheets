@@ -1,20 +1,20 @@
 <template>
     <div>
-        <button
-            class="bg-gray-50 border border-gray-300 truncate text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            type="button"
-            @click="emit('update:show', !show)"
-        >
-            {{ title }}
-        </button>
+        <slot name="button" @click="emit('update:show', !show)">
+            <button
+                class="bg-gray-50 border border-gray-300 truncate text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                type="button"
+                @click="emit('update:show', !show)"
+            >
+                {{ title }}
+            </button>
+        </slot>
         <div
             v-if="show"
-            class="fixed overflow-y-scroll h-full left-0 top-0 z-50 w-full md:inset-0 justify-center content-center"
+            class="fixed overflow-y-scroll left-0 top-0 z-50 md:inset-0 justify-center content-center"
         >
-            <div class="p-4 items-center w-full md:h-auto">
-                <!-- Modal content -->
-                <div class="bg-white rounded-lg shadow dark:bg-gray-700">
-                    <!-- Modal header -->
+            <div class="p-4 items-center md:h-auto">
+                <div class="bg-white max-w-2xl ml-auto mr-auto rounded-lg shadow dark:bg-slate-800">
                     <div
                         class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600"
                     >
@@ -63,7 +63,7 @@
 </template>
 <script lang="ts" setup>
 defineProps<{
-    title: string;
+    title?: string;
     show: boolean;
 }>();
 
