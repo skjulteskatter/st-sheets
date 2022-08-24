@@ -1,4 +1,10 @@
-<template></template>
+<template>
+    <div class="flex">
+        <div>
+            CONTIRBUTOR ASDO AGOEIAHGO
+        </div>
+    </div>
+</template>
 <script lang="ts" setup>
 import { ref } from "vue";
 import { songService, contributorService } from "../services/hiddentreasures";
