@@ -1,52 +1,42 @@
 <template>
-    <div>
-        <div class="p-4 w-full flex dark:text-white">
+    <Loader>
+        <div
+            class="py-4 px-4 lg:px-0 max-w-4xl mx-auto flex gap-4 dark:text-white border-b border-gray-700"
+        >
             <CollectionSelector
-                class="ml-2 flex-col-1"
+                class="flex-col-1"
                 v-model:collection="collectionId"
-            ></CollectionSelector>
+            />
             <!-- <TranspositionSelector
                 class="ml-2"
                 v-model:transposition="transposition"
-            ></TranspositionSelector> -->
-            <Suspense v-if="collectionId">
-                <template #default>
-                    <SongSelector
-                        class="ml-2"
-                        :collectionId="collectionId"
-                        v-model:song="song"
-                    >
-                    </SongSelector>
-                </template>
-                <template #fallback> Loading... </template>
-            </Suspense>
-            <div></div>
+            /> -->
+            <SongSelector
+                v-if="collectionId"
+                :collectionId="collectionId"
+                v-model:song="song"
+            />
+            <Settings
+                class="fixed top-0 right-0 p-8 z-50"
+                v-model:transposition="transposition"
+                v-model:theme="theme"
+            />
         </div>
-        <Settings
-            class="fixed top-0 right-0 p-8 z-50"
-            v-model:transposition="transposition"
-            v-model:theme="theme"
-        >
-        </Settings>
-        <div>
-            <Suspense v-if="song">
-                <template #default>
-                    <SheetViewer
-                        :songId="song"
-                        :transposition="transposition ?? '0'"
-                    ></SheetViewer>
-                </template>
-                <template #fallback> Loading... </template>
-            </Suspense>
-        </div>
-    </div>
+        <SheetViewer
+            v-if="song"
+            :songId="song"
+            :transposition="transposition ?? '0'"
+        />
+    </Loader>
 </template>
+
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import CollectionSelector from "../components/CollectionSelector.vue";
 import SongSelector from "../components/SongSelector.vue";
 import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
+import Loader from "../components/Loader.vue";
 import themes from "../services/themes";
 
 const _collectionId = ref(localStorage.getItem("collection"));
@@ -82,12 +72,12 @@ const transposition = computed({
 
 const theme = computed({
     get() {
-        return themes.get()
+        return themes.get();
     },
     set(v) {
-        themes.set(v)
-    }
-})
+        themes.set(v);
+    },
+});
 
 const _song = ref(localStorage.getItem("song"));
 const song = computed({
