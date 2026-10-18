@@ -55,7 +55,6 @@ const title = computed(() => {
 const setSong = (song: Song) => {
     emit("update:song", song.id);
     showModal.value = false;
-    title.effect.run();
 };
 
 watch(
