@@ -24,12 +24,18 @@
                 class="ml-2 self-end"
                 :startContext="bandSyncStartContext"
             ></BandSync>
+            <SongCredits
+                v-if="song"
+                class="ml-4 self-end"
+                :songId="song"
+            ></SongCredits>
         </div>
         <BandSyncOutOfSyncBar></BandSyncOutOfSyncBar>
         <Settings
             class="fixed top-0 right-0 p-8 z-50"
             v-model:transposition="transposition"
             v-model:theme="theme"
+            v-model:clef="clef"
         >
         </Settings>
         <div>
@@ -39,6 +45,8 @@
                         :songId="song"
                         :transposition="transposition ?? '0'"
                         v-model:currentTransposition="sheetTransposition"
+                        v-model:octave="octave"
+                        :clef="clef"
                     ></SheetViewer>
                 </template>
                 <template #fallback> Loading... </template>
@@ -54,10 +62,13 @@ import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
 import BandSync from "../components/BandSync.vue";
 import BandSyncOutOfSyncBar from "../components/BandSyncOutOfSyncBar.vue";
+import SongCredits from "../components/SongCredits.vue";
 import themes from "../services/themes";
 import {
+    clef,
     collectionId as _collectionId,
     instrument,
+    octave,
     selectCollection,
     selectInstrument,
     selectSong,

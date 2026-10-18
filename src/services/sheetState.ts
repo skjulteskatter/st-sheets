@@ -25,6 +25,21 @@ export const songId = persisted("song");
 export const instrument = persisted("transposition");
 export const sheetTransposition = ref(instrument.value ?? "0");
 
+export type Clef = "treble" | "bass" | "alto";
+const _clef = persisted("clef");
+/** Clef to render in (Settings). */
+export const clef = computed<Clef>({
+    get: () => (_clef.value as Clef | null) ?? "treble",
+    set: (v) => (_clef.value = v === "treble" ? null : v),
+});
+
+const _octave = persisted("octave");
+/** Octave shift applied on top of the transposition when rendering (not band synced). */
+export const octave = computed<number>({
+    get: () => parseInt(_octave.value ?? "0") || 0,
+    set: (v) => (_octave.value = v ? v.toString() : null),
+});
+
 const resolvedSong = ref(null as { key: string; number: number | null } | null);
 
 function songKey(collection: string | null, song: string | null) {

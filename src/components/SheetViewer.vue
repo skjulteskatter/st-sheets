@@ -1,6 +1,6 @@
 <template>
     <div class="max-w-4xl ml-auto mr-auto">
-        <div class="flex m-4 gap-4">
+        <div class="flex flex-wrap m-4 gap-4">
             <div>
                 <label>Key</label>
                 <BaseButton class="w-full">
@@ -20,6 +20,20 @@
                     :relative="parseInt(transposition)"
                     @update:transposition="transpose"
                 ></TranspositionSelector>
+            </div>
+            <div v-if="currentSheet">
+                <label>Octave</label>
+                <div class="flex">
+                    <BaseButton class="px-3" @click="emit('update:octave', octave - 1)">
+                        <MinusIcon class="w-4 h-4"></MinusIcon>
+                        <span class="sr-only">Octave down</span>
+                    </BaseButton>
+                    <span class="w-10 self-center text-center">{{ octave > 0 ? "+" + octave : octave }}</span>
+                    <BaseButton class="px-3" @click="emit('update:octave', octave + 1)">
+                        <PlusIcon class="w-4 h-4"></PlusIcon>
+                        <span class="sr-only">Octave up</span>
+                    </BaseButton>
+                </div>
             </div>
         </div>
         <div v-if="svg" class="w-full content-center">
@@ -50,7 +64,7 @@
 import { ref, watch } from "vue";
 import { sheetService, fileService, songService } from "../services/hiddentreasures";
 import SvgViewer from "./SvgViewer.vue";
-import { DotsCircleHorizontalIcon } from "@heroicons/vue/outline";
+import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon } from "@heroicons/vue/outline";
 import TranspositionSelector from "./TranspositionSelector.vue";
 import BaseButton from "./BaseButton.vue";
 
@@ -58,10 +72,13 @@ const props = defineProps<{
     songId: string;
     transposition: string;
     currentTransposition: string;
+    clef: "treble" | "bass" | "alto";
+    octave: number;
 }>();
 
 const emit = defineEmits<{
     (e: "update:currentTransposition", value: string): void;
+    (e: "update:octave", value: number): void;
 }>();
 
 const getSheets = async () => {
@@ -87,7 +104,8 @@ const renderSheet = async (sheetId: string) => {
     try {
         const svgs = await sheetService.render({
             id: sheetId,
-            transposition: parseInt(props.currentTransposition),
+            transposition: parseInt(props.currentTransposition) + 12 * props.octave,
+            clef: props.clef,
         });
 
         if (generation === renderGeneration) {
@@ -123,7 +141,7 @@ watch(
 );
 
 watch(
-    () => props.currentTransposition,
+    () => [props.currentTransposition, props.clef, props.octave],
     () => {
         if (currentSheet.value) {
             renderSheet(currentSheet.value);

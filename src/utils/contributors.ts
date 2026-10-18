@@ -1,13 +1,32 @@
-import { ISong } from "hiddentreasures-js";
+import { ISong, ParticipantType } from "hiddentreasures-js";
 import { contributorService } from "../services/hiddentreasures";
 
-export async function getContributorString(song: ISong) {
-    const contributors = await Promise.all(song.participants.map(i => contributorService.get(i.contributorId)))
+export type Credits = {
+    authors: string[];
+    composers: string[];
+};
 
-    let result = "";
+/** Names of the song's authors (text) and composers (melody). */
+export async function getCredits(song: ISong): Promise<Credits> {
+    const ids = [
+        ...new Set(
+            song.participants
+                .filter((p) => p.type === "author" || p.type === "composer")
+                .map((p) => p.contributorId),
+        ),
+    ];
+    const contributors = ids.length
+        ? await contributorService.retrieve({ itemIds: ids })
+        : [];
 
-    const authors = song.participants.filter(i => i.type === "author")
-    if (authors.length) {
-        
-    }
+    const names = (type: ParticipantType) =>
+        song.participants
+            .filter((p) => p.type === type)
+            .map((p) => contributors.find((c) => c.id === p.contributorId)?.name)
+            .filter((name): name is string => !!name);
+
+    return {
+        authors: names("author"),
+        composers: names("composer"),
+    };
 }

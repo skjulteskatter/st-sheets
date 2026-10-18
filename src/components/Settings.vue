@@ -10,11 +10,19 @@
                     <span class="sr-only">Settings</span>
                 </button>
             </template>
-            <div class="flex">
+            <div class="flex flex-wrap">
                 <InstrumentSelector
                     class="m-2"
                     v-model:transposition="selectedTransposition"
                 ></InstrumentSelector>
+                <div class="m-2">
+                    <label>Clef</label>
+                    <BaseSelect v-model="selectedClef">
+                        <option value="treble">Treble</option>
+                        <option value="bass">Bass</option>
+                        <option value="alto">Alto</option>
+                    </BaseSelect>
+                </div>
                 <div class="m-2">
                     <label>Theme</label>
                     <BaseSelect
@@ -52,11 +60,13 @@ const show = ref(false)
 const props = defineProps<{ 
     transposition: string | null
     theme: "dark" | "light" | null
+    clef: "treble" | "bass" | "alto"
 }>()
 
 const emit = defineEmits<{
     (e: "update:transposition", t: string | null): any
     (e: "update:theme", t: "dark" | "light" | null): any
+    (e: "update:clef", c: "treble" | "bass" | "alto"): any
 }>()
 
 const selectedTransposition = computed({
@@ -74,6 +84,15 @@ const selectedTheme = computed({
     },
     set(v) {
         emit("update:theme", v)
+    }
+})
+
+const selectedClef = computed({
+    get() {
+        return props.clef
+    },
+    set(v) {
+        emit("update:clef", (v ?? "treble") as "treble" | "bass" | "alto")
     }
 })
 

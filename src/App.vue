@@ -10,7 +10,7 @@
                 </template>
             </Suspense>
         </div>
-        <Login v-else :login="auth.login"></Login>
+        <Login v-else></Login>
     </div>
 </template>
 <script lang="ts" setup>
