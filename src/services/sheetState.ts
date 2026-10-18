@@ -39,20 +39,35 @@ export const songNumber = computed(() => {
         : null;
 });
 
-watch(
-    [collectionId, songId],
-    async ([collection, song]) => {
-        const key = songKey(collection, song);
-        if (!collection || !song || resolvedSong.value?.key === key) {
-            return;
-        }
-        const s = await songService.get(song);
-        if (key === songKey(collectionId.value, songId.value)) {
-            resolvedSong.value = { key, number: s.getNumber(collection) };
-        }
-    },
-    { immediate: true },
-);
+let resolvingSongNumber = false;
+
+/**
+ * Starts resolving songNumber. Called from Sheets.vue (mounted only when logged
+ * in): the API needs an auth token, so this must not run at module load.
+ */
+export function startSongNumberResolver() {
+    if (resolvingSongNumber) return;
+    resolvingSongNumber = true;
+
+    watch(
+        [collectionId, songId],
+        async ([collection, song]) => {
+            const key = songKey(collection, song);
+            if (!collection || !song || resolvedSong.value?.key === key) {
+                return;
+            }
+            try {
+                const s = await songService.get(song);
+                if (key === songKey(collectionId.value, songId.value)) {
+                    resolvedSong.value = { key, number: s.getNumber(collection) };
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+        { immediate: true },
+    );
+}
 
 // --- user actions ---
 

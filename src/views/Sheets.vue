@@ -64,6 +64,7 @@ import {
     sheetTransposition,
     songId,
     songNumber,
+    startSongNumberResolver,
 } from "../services/sheetState";
 import { init as initBandSync } from "../services/bandSync/bandSyncStore";
 import {
@@ -121,6 +122,7 @@ const bandSyncStartContext = computed(() => {
 });
 
 onMounted(() => {
+    startSongNumberResolver();
     startBandSyncCoordinator();
     void initBandSync();
 });
