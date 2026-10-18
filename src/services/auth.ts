@@ -10,7 +10,7 @@ import { firebaseConfig } from "../config";
 
 export const app = initializeApp(firebaseConfig);
 
-const firebaseAuth = getAuth(app);
+export const firebaseAuth = getAuth(app);
 
 export class Auth {
     get authenticated() {

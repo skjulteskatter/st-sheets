@@ -57,14 +57,17 @@ import BaseButton from "./BaseButton.vue";
 const props = defineProps<{
     songId: string;
     transposition: string;
+    currentTransposition: string;
+}>();
+
+const emit = defineEmits<{
+    (e: "update:currentTransposition", value: string): void;
 }>();
 
 const getSheets = async () => {
     const files = await fileService.childrenOf(props.songId);
     return files.filter((f) => f.type === "sheetmusic");
 };
-
-const currentTransposition = ref(props.transposition)
 
 const song = ref(await songService.get(props.songId))
 const svg = ref(null as string | null);
@@ -73,18 +76,25 @@ const currentSheet = ref(null as string | null)
 
 const error = ref(null as string | null)
 
+// Song and transposition can change together (band sync); only the latest render wins.
+let renderGeneration = 0;
+
 const renderSheet = async (sheetId: string) => {
+    const generation = ++renderGeneration;
     error.value = null;
     currentSheet.value = sheetId;
     sheets.value = [];
     try {
         const svgs = await sheetService.render({
             id: sheetId,
-            transposition: parseInt(currentTransposition.value),
+            transposition: parseInt(props.currentTransposition),
         });
 
-        svg.value = svgs.join("\n");
+        if (generation === renderGeneration) {
+            svg.value = svgs.join("\n");
+        }
     } catch (e) {
+        if (generation !== renderGeneration) return;
         console.error(e)
         error.value = "Failed to render sheet. Check console for more details"
     }
@@ -94,20 +104,29 @@ if (sheets.value.length === 1) {
     renderSheet(sheets.value[0].id);
 }
 
-const transpose = async (t: string | null) => {
-    currentTransposition.value = t ?? '0'; 
-    await renderSheet(currentSheet.value ?? '');
+const transpose = (t: string | null) => {
+    emit("update:currentTransposition", t ?? "0");
 }
 
 watch(
-    () => [props.songId, props.transposition],
+    () => props.songId,
     async () => {
-        currentTransposition.value = props.transposition
+        renderGeneration++;
+        currentSheet.value = null;
         svg.value = null;
         sheets.value = await getSheets();
         song.value = await songService.get(props.songId)
         if (sheets.value.length === 1) {
             renderSheet(sheets.value[0].id);
+        }
+    }
+);
+
+watch(
+    () => props.currentTransposition,
+    () => {
+        if (currentSheet.value) {
+            renderSheet(currentSheet.value);
         }
     }
 );

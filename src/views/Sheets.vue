@@ -20,8 +20,12 @@
                 </template>
                 <template #fallback> Loading... </template>
             </Suspense>
-            <div></div>
+            <BandSync
+                class="ml-2 self-end"
+                :startContext="bandSyncStartContext"
+            ></BandSync>
         </div>
+        <BandSyncOutOfSyncBar></BandSyncOutOfSyncBar>
         <Settings
             class="fixed top-0 right-0 p-8 z-50"
             v-model:transposition="transposition"
@@ -34,6 +38,7 @@
                     <SheetViewer
                         :songId="song"
                         :transposition="transposition ?? '0'"
+                        v-model:currentTransposition="sheetTransposition"
                     ></SheetViewer>
                 </template>
                 <template #fallback> Loading... </template>
@@ -42,41 +47,46 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import CollectionSelector from "../components/CollectionSelector.vue";
 import SongSelector from "../components/SongSelector.vue";
 import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
+import BandSync from "../components/BandSync.vue";
+import BandSyncOutOfSyncBar from "../components/BandSyncOutOfSyncBar.vue";
 import themes from "../services/themes";
+import {
+    collectionId as _collectionId,
+    instrument,
+    selectCollection,
+    selectInstrument,
+    selectSong,
+    sheetTransposition,
+    songId,
+    songNumber,
+} from "../services/sheetState";
+import { init as initBandSync } from "../services/bandSync/bandSyncStore";
+import {
+    startBandSyncCoordinator,
+    stopBandSyncCoordinator,
+} from "../services/bandSync/bandSyncCoordinator";
+import { sessionTranspositionFromApi } from "../services/bandSync/bandSyncSession";
 
-const _collectionId = ref(localStorage.getItem("collection"));
 const collectionId = computed({
     get() {
         return _collectionId.value;
     },
     set(v) {
-        _collectionId.value = v;
-        song.value = null;
-        if (v) {
-            localStorage.setItem("collection", v);
-        } else {
-            localStorage.removeItem("collection");
-        }
+        selectCollection(v);
     },
 });
 
-const _transposition = ref(localStorage.getItem("transposition"));
 const transposition = computed({
     get() {
-        return _transposition.value;
+        return instrument.value;
     },
     set(v) {
-        _transposition.value = v;
-        if (v) {
-            localStorage.setItem("transposition", v);
-        } else {
-            localStorage.removeItem("transposition");
-        }
+        selectInstrument(v);
     },
 });
 
@@ -89,18 +99,31 @@ const theme = computed({
     }
 })
 
-const _song = ref(localStorage.getItem("song"));
 const song = computed({
     get() {
-        return _song.value;
+        return songId.value;
     },
     set(v) {
-        _song.value = v;
-        if (v) {
-            localStorage.setItem("song", v);
-        } else {
-            localStorage.removeItem("song");
-        }
+        selectSong(v);
     },
 });
+
+const bandSyncStartContext = computed(() => {
+    if (!_collectionId.value || !songId.value || !songNumber.value) return null;
+    return {
+        songbookId: _collectionId.value,
+        songNumber: songNumber.value,
+        transposition: sessionTranspositionFromApi(
+            parseInt(sheetTransposition.value) || 0,
+            parseInt(instrument.value ?? "0") || 0,
+        ),
+    };
+});
+
+onMounted(() => {
+    startBandSyncCoordinator();
+    void initBandSync();
+});
+
+onUnmounted(stopBandSyncCoordinator);
 </script>
