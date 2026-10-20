@@ -12,7 +12,7 @@ export default defineConfig({
             registerType: "autoUpdate",
             // public/manifest.json is linked from index.html
             manifest: false,
-            includeAssets: ["manifest.json", "st.ico", "img/*.svg"],
+            includeAssets: ["manifest.json", "st.ico", "img/*.svg", "icons/*.png"],
             workbox: {
                 globPatterns: ["**/*.{js,css,html,ico,svg,png}"],
                 // Firebase auth handler pages must always hit the network

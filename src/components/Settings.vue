@@ -28,6 +28,9 @@
                     <BaseSelect
                         v-model="selectedTheme"
                     >
+                        <option :value="null">
+                            System
+                        </option>
                         <option value="dark">
                             Dark
                         </option>
@@ -35,6 +38,14 @@
                             Light
                         </option>
                     </BaseSelect>
+                </div>
+                <div class="m-2">
+                    <label>Keep screen on</label>
+                    <BaseSelect v-model="selectedKeepScreenOn" :disabled="!wakeLockSupported">
+                        <option value="on">On</option>
+                        <option value="off">Off</option>
+                    </BaseSelect>
+                    <p v-if="!wakeLockSupported" class="text-xs opacity-60 mt-1">Not supported by this browser</p>
                 </div>
             </div>
             <div class="m-2 mt-4 border-t border-black/10 dark:border-white/20 pt-4">
@@ -68,6 +79,7 @@ import BaseSelect from './BaseSelect.vue';
 import InstrumentSelector from './InstrumentSelector.vue';
 import BaseButton from './BaseButton.vue';
 import auth from "../services/auth"
+import { keepScreenOn, wakeLockSupported } from "../services/wakeLock"
 import { clearUnpinnedSheets, measureSheets, SheetCacheSize } from "../services/offline/cachingClient"
 import { formatBytes } from "../utils/format"
 
@@ -113,6 +125,11 @@ const selectedClef = computed({
 })
 
 const logout = auth.logout
+
+const selectedKeepScreenOn = computed({
+    get: () => (keepScreenOn.value ? "on" : "off"),
+    set: (v) => (keepScreenOn.value = v === "on"),
+})
 
 const clearing = ref(false)
 const clearMessage = ref("")

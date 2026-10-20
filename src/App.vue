@@ -16,6 +16,8 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import auth from "./services/auth";
+// Applies the saved (or device) theme on load, also on the login page
+import "./services/themes";
 import Sheets from "./views/Sheets.vue";
 import Login from "./views/Login.vue";
 
@@ -26,8 +28,4 @@ auth.onStateUpdate(() => {
     ready.value = true;
     authenticated.value = auth.authenticated;
 });
-
-if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark")
-}
 </script>

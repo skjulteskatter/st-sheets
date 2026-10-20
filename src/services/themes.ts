@@ -1,38 +1,20 @@
-let prefersDark = false;
-
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    prefersDark = true;
-}
+import { ref } from "vue";
 
 export type Theme = "dark" | "light" | null
 
-const addClass = (c: string) => {
-    if (!document.documentElement.classList.contains(c)) {
-        document.documentElement.classList.add(c)
-    }
-}
+const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)')
 
-const removeClass = (c: string) => {
-    if (document.documentElement.classList.contains(c)) {
-        document.documentElement.classList.remove(c)
-    }
-}
+/** The chosen theme; null follows the device. Reactive so the Settings selector stays in sync. */
+const current = ref((localStorage.getItem("theme") as Theme) ?? null)
 
 class Themes {
     init() {
-        const saved = localStorage.getItem("theme")
-        if (saved === "dark") {
-            addClass("dark")
-        } else if (saved === "light") {
-            removeClass("dark")
-        } else if (prefersDark) {
-            addClass("dark")
-        } else {
-            removeClass("dark")
-        }
+        const dark = current.value ? current.value === "dark" : systemDark?.matches === true
+        document.documentElement.classList.toggle("dark", dark)
     }
 
     set(theme: Theme) {
+        current.value = theme
         if (theme) {
             localStorage.setItem("theme", theme)
         } else {
@@ -42,12 +24,15 @@ class Themes {
     }
 
     get() {
-        return localStorage.getItem("theme") as Theme
+        return current.value
     }
 }
 
 const themes = new Themes();
 
 themes.init();
+
+// With "System", follow the device switching between light and dark
+systemDark?.addEventListener?.("change", () => themes.init());
 
 export default themes;

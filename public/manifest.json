@@ -2,16 +2,28 @@
     "short_name": "Sheets",
     "name": "SongTreasures - Sheets",
     "icons": [
-      {
-        "src": "/st.ico",
-        "type": "image/png",
-        "sizes": "32x32"
-      }
+        {
+            "src": "/st.ico",
+            "type": "image/png",
+            "sizes": "32x32"
+        },
+        {
+            "src": "/icons/manifest-icon-200.png",
+            "sizes": "200x200",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icons/manifest-icon-400.png",
+            "sizes": "400x400",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
     ],
     "start_url": "/",
-    "background_color": "#3367D6",
+    "background_color": "#FFFFFF",
     "display": "standalone",
     "scope": "/",
-    "theme_color": "#3367D6",
+    "theme_color": "#CAA970",
     "description": "A sheet viewer for SongTreasures"
-  }
+}

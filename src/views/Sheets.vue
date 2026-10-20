@@ -32,6 +32,7 @@
             </div>
         </div>
         <BandSyncOutOfSyncBar></BandSyncOutOfSyncBar>
+        <InstallPrompt></InstallPrompt>
         <div>
             <Suspense v-if="song">
                 <template #default>
@@ -56,6 +57,7 @@ import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
 import BandSync from "../components/BandSync.vue";
 import OfflineDownload from "../components/OfflineDownload.vue";
+import InstallPrompt from "../components/InstallPrompt.vue";
 import BandSyncOutOfSyncBar from "../components/BandSyncOutOfSyncBar.vue";
 import themes from "../services/themes";
 import {
