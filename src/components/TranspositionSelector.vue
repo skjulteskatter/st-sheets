@@ -8,7 +8,7 @@
             v-model="selectedTransposition"
         >
             <option v-for="t of transposer.getRelativeTranspositions(original ?? 'C', relative, true)" :value="t.value.toString()">
-                {{ t.view }}
+                {{ musicalKey(minorLabel(t.view, minor === true)) }}
             </option>
         </BaseSelect>
     </div>
@@ -16,13 +16,15 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import BaseSelect from "./BaseSelect.vue";
-import { transposer } from "../services/transposer";
+import { minorLabel, musicalKey, transposer } from "../services/transposer";
 
 
 const props = defineProps<{
     transposition: string | null;
     original?: string | null;
     relative: number;
+    /** Minor song: keys are shown with an "m" suffix. */
+    minor?: boolean;
 }>();
 
 const emit = defineEmits<{

@@ -7,14 +7,25 @@ import type { Clef } from "./sheetState";
 /**
  * Renders a sheet to SVG pages. Shared by the viewer and the offline download
  * so both send the exact same request, which is what the offline cache is keyed on.
+ * `instruments` limits a multi-instrument sheet to those parts; empty means all.
  */
-export function renderSheet(id: string, transposition: number, clef: Clef, service: SheetService = sheetService) {
-    return service.render(renderOptions(id, transposition, clef));
+export function renderSheet(
+    id: string,
+    transposition: number,
+    clef: Clef,
+    { instruments = [], service = sheetService }: { instruments?: string[]; service?: SheetService } = {},
+) {
+    return service.render(renderOptions(id, transposition, clef, instruments));
 }
 
 /** This render from the offline cache, without touching the network, or undefined if it isn't cached. */
-export function cachedRender(id: string, transposition: number, clef: Clef) {
-    return cachedPost<string[]>("api/Sheets", renderOptions(id, transposition, clef));
+export function cachedRender(id: string, transposition: number, clef: Clef, instruments: string[] = []) {
+    return cachedPost<string[]>("api/Sheets", renderOptions(id, transposition, clef, instruments));
+}
+
+/** The instrument parts in a sheet, e.g. ["Voice", "Piano"]. */
+export async function getSheetInstruments(id: string) {
+    return (await sheetService.get(id)).instruments;
 }
 
 /** When this render was saved in the offline cache, or undefined if it isn't. */
@@ -32,8 +43,9 @@ export function pinRender(id: string, transposition: number, clef: Clef) {
     return pinCachedPost("api/Sheets", renderOptions(id, transposition, clef));
 }
 
-function renderOptions(id: string, transposition: number, clef: Clef) {
-    return { id, transposition, clef };
+function renderOptions(id: string, transposition: number, clef: Clef, instruments: string[] = []) {
+    // Left out when empty (all parts), so these requests match downloads and earlier saved renders
+    return instruments.length ? { id, transposition, clef, instruments } : { id, transposition, clef };
 }
 
 export async function getSheetFiles(songId: string) {

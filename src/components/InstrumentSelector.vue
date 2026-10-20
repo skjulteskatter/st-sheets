@@ -8,7 +8,7 @@
             v-model="selectedTransposition"
         >
             <option v-for="t of transpositions" :value="t.key">
-                {{ t.display }}
+                {{ musicalKey(t.display) }}
             </option>
         </BaseSelect>
     </div>
@@ -17,6 +17,7 @@
 import { computed } from "vue";
 import BaseSelect from "./BaseSelect.vue";
 import { transpositions } from "../utils/instruments";
+import { musicalKey } from "../services/transposer";
 
 const props = defineProps<{
     transposition: string | null;

@@ -234,3 +234,21 @@ class Transposer {
 }
 
 export const transposer = new Transposer();
+
+/** "D" → "Dm" for a minor song; a key that already ends in "m" is left as is. */
+export function keyName(key: string, minor: boolean) {
+    return minor && !key.endsWith("m") ? key + "m" : key;
+}
+
+/** Adds "m" to every key in a transposition label for a minor song: "B (D)" → "Bm (Dm)". */
+export function minorLabel(label: string, minor: boolean) {
+    return minor ? label.replace(/([A-G][#b]?)(?![#bm])/g, "$1m") : label;
+}
+
+/**
+ * Key names with musical flat and sharp signs for display: "Eb (F#)" → "E♭ (F♯)".
+ * Only a "b" or "#" right after a note letter.
+ */
+export function musicalKey(label: string) {
+    return label.replace(/([A-G])b/g, "$1♭").replace(/([A-G])#/g, "$1♯");
+}

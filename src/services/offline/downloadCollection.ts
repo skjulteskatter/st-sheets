@@ -115,7 +115,7 @@ export async function downloadCollection(
                         continue;
                     }
                     const pages = await withRetry(
-                        () => renderSheet(sheet.id, options.transposition, options.clef, sheetService),
+                        () => renderSheet(sheet.id, options.transposition, options.clef, { service: sheetService }),
                         signal,
                     );
                     progress.bytes += approximateSize(pages);

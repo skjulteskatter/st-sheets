@@ -1,3 +1,4 @@
+import { musicalKey } from "../services/transposer";
 /** Instrument keys and the sheet transposition each one needs. */
 export const transpositions: {
     key: number;
@@ -62,5 +63,5 @@ export const transpositions: {
 /** Display name of an instrument transposition, e.g. "Bb". */
 export function instrumentName(transposition: string | null) {
     const key = parseInt(transposition ?? "0") || 0;
-    return transpositions.find((t) => t.key === key)?.display ?? transposition ?? "C";
+    return musicalKey(transpositions.find((t) => t.key === key)?.display ?? transposition ?? "C");
 }

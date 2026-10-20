@@ -5,7 +5,7 @@
             <div class="card flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-normal">
                 <SongCredits :songId="songId"></SongCredits>
                 <div class="opacity-70">
-                    <p v-if="song.originalKey">Key: <span class="font-semibold">{{ song.originalKey }}</span></p>
+                    <p v-if="song.originalKey">Key: <span class="font-semibold">{{ musicalKey(keyName(song.originalKey, minor)) }}</span></p>
                     <p v-if="song.verses">Verses: <span class="font-semibold">{{ song.verses }}</span></p>
                 </div>
             </div>
@@ -16,9 +16,24 @@
                         :transposition="currentTransposition"
                         :original="song.originalKey"
                         :relative="parseInt(transposition)"
+                        :minor="minor"
                         @update:transposition="transpose"
                     ></TranspositionSelector>
                 </div>
+                <div v-if="sheets.length > 1">
+                    <label for="sheet-select">Sheet</label>
+                    <BaseSelect id="sheet-select" v-model="selectedSheet" class="max-w-[12rem]">
+                        <option v-if="!currentSheet" :value="null" disabled>Pick a sheet</option>
+                        <option v-for="(sheet, i) in sheets" :key="sheet.id" :value="sheet.id">
+                            {{ sheetLabel(i) }}
+                        </option>
+                    </BaseSelect>
+                </div>
+                <InstrumentPicker
+                    v-if="sheetInstruments.length > 1"
+                    v-model="selectedInstruments"
+                    :instruments="sheetInstruments"
+                ></InstrumentPicker>
                 <div v-if="currentSheet">
                     <label>Octave</label>
                     <div class="flex">
@@ -53,14 +68,17 @@
         <div v-if="svg" class="w-full content-center">
             <SvgViewer class="max-w-4xl ml-auto mr-auto" :style="{ width: zoom + '%' }" :svg="svg"></SvgViewer>
         </div>
-        <div v-else-if="sheets.length > 1">
-            <div
-                class="cursor-pointer border m-4 p-2"
-                v-for="sheet in sheets"
+        <!-- Several sheets and none picked yet: pick one (later switch with the Sheet dropdown) -->
+        <div v-else-if="!currentSheet && sheets.length > 1" class="m-4 flex flex-col gap-2">
+            <p class="text-sm opacity-70">This song has {{ sheets.length }} sheets. Pick one:</p>
+            <BaseButton
+                v-for="(sheet, i) in sheets"
+                :key="sheet.id"
+                class="!justify-start"
                 @click="renderSheet(sheet.id)"
             >
-                {{ sheet.category }}
-            </div>
+                {{ sheetLabel(i) }}
+            </BaseButton>
         </div>
         <div v-else-if="error" class="w-full text-red-400">
             <BaseButton class="mr-auto ml-auto">
@@ -75,9 +93,9 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { getSong } from "../services/collectionData";
-import { cachedRender, getSheetFiles, renderSheet as fetchSheet } from "../services/sheetRender";
+import { cachedRender, getSheetFiles, getSheetInstruments, renderSheet as fetchSheet } from "../services/sheetRender";
 import { online } from "../services/offline/network";
 import SvgViewer from "./SvgViewer.vue";
 import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon, ZoomInIcon, ZoomOutIcon } from "@heroicons/vue/outline";
@@ -85,6 +103,9 @@ import { MIN_ZOOM, zoom } from "../services/sheetState";
 import TranspositionSelector from "./TranspositionSelector.vue";
 import BaseButton from "./BaseButton.vue";
 import SongCredits from "./SongCredits.vue";
+import { keyName, musicalKey } from "../services/transposer";
+import InstrumentPicker from "./InstrumentPicker.vue";
+import BaseSelect from "./BaseSelect.vue";
 
 const props = defineProps<{
     songId: string;
@@ -108,25 +129,64 @@ const currentSheet = ref(null as string | null)
 
 const error = ref(null as string | null)
 
+/** The API sends `minor` on songs; the library's Song type just doesn't declare it. */
+const minor = computed(() => (song.value as { minor?: boolean }).minor === true)
+
+/** A sheet's name for the picker: its category, or name, numbered when several share it. */
+const sheetLabel = (index: number) => {
+    const sheet = sheets.value[index]
+    const name = sheet.category || sheet.name || `Sheet ${index + 1}`
+    const sameName = sheets.value.filter((s) => (s.category || s.name) === (sheet.category || sheet.name))
+    return sameName.length > 1 ? `${name} ${sameName.indexOf(sheet) + 1}` : name
+}
+
+/** The Sheet dropdown: switching renders the other sheet. */
+const selectedSheet = computed({
+    get: () => currentSheet.value,
+    set: (id: string | null) => {
+        if (id && id !== currentSheet.value) renderSheet(id)
+    },
+})
+
+/** Parts in the current sheet; the picker shows when there's more than one. */
+const sheetInstruments = ref([] as string[])
+/** Parts to show; empty means all. Reset for every sheet. */
+const selectedInstruments = ref([] as string[])
+
+const loadInstruments = async (sheetId: string) => {
+    try {
+        const instruments = await getSheetInstruments(sheetId)
+        if (currentSheet.value === sheetId) sheetInstruments.value = instruments
+    } catch (e) {
+        // Details unavailable (e.g. offline): the sheet still renders with all parts
+        console.error(e)
+    }
+}
+
 // Song and transposition can change together (band sync); only the latest render wins.
 let renderGeneration = 0;
 
 const renderSheet = async (sheetId: string) => {
     const generation = ++renderGeneration;
     error.value = null;
+    if (currentSheet.value !== sheetId) {
+        sheetInstruments.value = [];
+        selectedInstruments.value = [];
+        loadInstruments(sheetId);
+    }
     currentSheet.value = sheetId;
-    sheets.value = [];
     const transposition = parseInt(props.currentTransposition) + 12 * props.octave;
     const clef = props.clef;
+    const instruments = [...selectedInstruments.value];
 
     // Show the saved copy right away, then swap in the fresh render if it differs
-    const cached = await cachedRender(sheetId, transposition, clef);
+    const cached = await cachedRender(sheetId, transposition, clef, instruments);
     if (cached && generation === renderGeneration) {
         svg.value = cached.join("\n");
     }
 
     try {
-        const svgs = await fetchSheet(sheetId, transposition, clef);
+        const svgs = await fetchSheet(sheetId, transposition, clef, { instruments });
         const fresh = svgs.join("\n");
 
         if (generation === renderGeneration && svg.value !== fresh) {
@@ -156,6 +216,8 @@ watch(
     async () => {
         renderGeneration++;
         currentSheet.value = null;
+        sheetInstruments.value = [];
+        selectedInstruments.value = [];
         svg.value = null;
         sheets.value = await getSheets();
         song.value = await getSong(props.songId)
@@ -166,7 +228,14 @@ watch(
 );
 
 watch(
-    () => [props.currentTransposition, props.clef, props.octave],
+    // Separate sources, each compared by value: resetting the instruments to a new
+    // empty list for a new sheet is not a change, so it doesn't render twice
+    [
+        () => props.currentTransposition,
+        () => props.clef,
+        () => props.octave,
+        () => selectedInstruments.value.join("\n"),
+    ],
     () => {
         if (currentSheet.value) {
             renderSheet(currentSheet.value);
