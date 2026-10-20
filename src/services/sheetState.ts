@@ -48,6 +48,12 @@ export const zoom = computed<number>({
     set: (v) => (_zoom.value = v >= 100 ? null : v.toString()),
 });
 
+/**
+ * The sheet shown and which version of it (sheetEdits id, null for the original); null before
+ * a sheet is picked. Published to band sync followers when leading.
+ */
+export const sheetEdit = ref(null as { fileId: string; editId: string | null } | null);
+
 const resolvedSong = ref(null as { key: string; number: number | null } | null);
 
 function songKey(collection: string | null, song: string | null) {

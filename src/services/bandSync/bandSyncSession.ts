@@ -16,6 +16,8 @@ export type BandSyncSession = {
     songbookId: string;
     songNumber: number;
     transposition: number;
+    sheetFileId: string | null;
+    sheetEditId: string | null;
     createdAt: Date;
     updatedAt: Date;
     expireAt: Date;
@@ -36,8 +38,7 @@ export class BandSyncException extends Error {
     }
 }
 
-export const ANOTHER_DEVICE_LEADING =
-    "Another device is leading this session.";
+export const ANOTHER_DEVICE_LEADING = "Another device is leading this session.";
 
 function readTimestamp(value: unknown): Date | null {
     if (value instanceof Timestamp) {
@@ -46,9 +47,13 @@ function readTimestamp(value: unknown): Date | null {
     return null;
 }
 
+function readString(value: unknown): string | null {
+    return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 export function fromFirestore(
     code: string,
-    data: Record<string, unknown>,
+    data: Record<string, unknown>
 ): BandSyncSession {
     const createdAt = readTimestamp(data.createdAt) ?? new Date();
     const updatedAt = readTimestamp(data.updatedAt) ?? createdAt;
@@ -67,6 +72,8 @@ export function fromFirestore(
         songbookId: data.songbookId as string,
         songNumber: (data.songNumber as number).valueOf(),
         transposition: (data.transposition as number).valueOf(),
+        sheetFileId: readString(data.sheetFileId),
+        sheetEditId: readString(data.sheetEditId),
         createdAt,
         updatedAt,
         expireAt: readTimestamp(data.expireAt) ?? createdAt,
@@ -76,7 +83,7 @@ export function fromFirestore(
 /** Legacy sessions without a device claim match any device. */
 export function isLedByDevice(
     session: BandSyncSession,
-    deviceId: string,
+    deviceId: string
 ): boolean {
     const remote = session.leaderDeviceId;
     if (remote == null || remote === "") {
@@ -107,7 +114,7 @@ const MS_PER_SECOND = 1000;
 function formatRelativeTimeUntil(
     expireAt: Date,
     locale: string,
-    now: Date,
+    now: Date
 ): string {
     const rtfl = new Intl.RelativeTimeFormat(locale, {
         localeMatcher: "best fit",
@@ -135,7 +142,7 @@ function formatRelativeTimeUntil(
 export function formatSessionExpiry(
     expireAt: Date,
     locale: string,
-    now = new Date(),
+    now = new Date()
 ): SessionExpiryDisplay {
     const absolute = new Intl.DateTimeFormat(locale, {
         dateStyle: "medium",
@@ -167,7 +174,7 @@ function pitchClass(value: number): number {
  */
 export function toSheetApiTransposition(
     sessionTransposition: number,
-    instrument: number,
+    instrument: number
 ): number {
     const api = pitchClass(sessionTransposition + instrument);
     return api === pitchClass(instrument) ? instrument : api;
@@ -176,7 +183,7 @@ export function toSheetApiTransposition(
 /** Sheet API → session (lyrics) transposition, normalised to -5..6. */
 export function sessionTranspositionFromApi(
     apiTransposition: number,
-    instrument: number,
+    instrument: number
 ): number {
     const session = pitchClass(apiTransposition - instrument);
     return session > 6 ? session - 12 : session;
@@ -186,7 +193,7 @@ export function matchesSongState(
     session: BandSyncSession,
     songbookId: string,
     songNumber: number,
-    transposition: number,
+    transposition: number
 ): boolean {
     return (
         session.songbookId === songbookId &&
@@ -195,9 +202,20 @@ export function matchesSongState(
     );
 }
 
+export function matchesSheetEdit(
+    session: BandSyncSession,
+    sheetFileId: string | null,
+    sheetEditId: string | null
+): boolean {
+    return (
+        session.sheetFileId === sheetFileId &&
+        session.sheetEditId === sheetEditId
+    );
+}
+
 export function hasLeaderStateChangedComparedTo(
     session: BandSyncSession,
-    other: BandSyncSession | null,
+    other: BandSyncSession | null
 ): boolean {
     if (!other) return true;
     return (

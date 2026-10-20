@@ -8,19 +8,24 @@ import type { Clef } from "./sheetState";
  * Renders a sheet to SVG pages. Shared by the viewer and the offline download
  * so both send the exact same request, which is what the offline cache is keyed on.
  * `instruments` limits a multi-instrument sheet to those parts; empty means all.
+ * `editId` renders a user's version of the sheet (from band sync) instead of the original.
  */
 export function renderSheet(
     id: string,
     transposition: number,
     clef: Clef,
-    { instruments = [], service = sheetService }: { instruments?: string[]; service?: SheetService } = {},
+    {
+        instruments = [],
+        editId = null,
+        service = sheetService,
+    }: { instruments?: string[]; editId?: string | null; service?: SheetService } = {},
 ) {
-    return service.render(renderOptions(id, transposition, clef, instruments));
+    return service.render(renderOptions(id, transposition, clef, instruments, editId));
 }
 
 /** This render from the offline cache, without touching the network, or undefined if it isn't cached. */
-export function cachedRender(id: string, transposition: number, clef: Clef, instruments: string[] = []) {
-    return cachedPost<string[]>("api/Sheets", renderOptions(id, transposition, clef, instruments));
+export function cachedRender(id: string, transposition: number, clef: Clef, instruments: string[] = [], editId: string | null = null) {
+    return cachedPost<string[]>("api/Sheets", renderOptions(id, transposition, clef, instruments, editId));
 }
 
 /** The instrument parts in a sheet, e.g. ["Voice", "Piano"]. */
@@ -43,9 +48,15 @@ export function pinRender(id: string, transposition: number, clef: Clef) {
     return pinCachedPost("api/Sheets", renderOptions(id, transposition, clef));
 }
 
-function renderOptions(id: string, transposition: number, clef: Clef, instruments: string[] = []) {
-    // Left out when empty (all parts), so these requests match downloads and earlier saved renders
-    return instruments.length ? { id, transposition, clef, instruments } : { id, transposition, clef };
+function renderOptions(id: string, transposition: number, clef: Clef, instruments: string[] = [], editId: string | null = null) {
+    // Left out when empty (all parts, the original), so these requests match downloads and earlier saved renders
+    return {
+        id,
+        transposition,
+        clef,
+        ...(instruments.length ? { instruments } : {}),
+        ...(editId ? { editId } : {}),
+    };
 }
 
 export async function getSheetFiles(songId: string) {

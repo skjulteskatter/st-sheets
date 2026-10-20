@@ -29,6 +29,15 @@
                         </option>
                     </BaseSelect>
                 </div>
+                <div v-if="currentSheet && (versions.length || currentEditId)">
+                    <label for="version-select">Version</label>
+                    <BaseSelect id="version-select" v-model="selectedVersion" class="max-w-[12rem]">
+                        <option value="">Original</option>
+                        <option v-for="v in versions" :key="v.id" :value="v.id">{{ v.name }}</option>
+                        <!-- Someone else's version: the band sync leader's, or from a shared link -->
+                        <option v-if="otherVersionLabel" :value="currentEditId" disabled>{{ otherVersionLabel }}</option>
+                    </BaseSelect>
+                </div>
                 <InstrumentPicker
                     v-if="sheetInstruments.length > 1"
                     v-model="selectedInstruments"
@@ -99,13 +108,15 @@ import { cachedRender, getSheetFiles, getSheetInstruments, renderSheet as fetchS
 import { online } from "../services/offline/network";
 import SvgViewer from "./SvgViewer.vue";
 import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon, ZoomInIcon, ZoomOutIcon } from "@heroicons/vue/outline";
-import { MIN_ZOOM, zoom } from "../services/sheetState";
+import { MIN_ZOOM, sheetEdit, zoom } from "../services/sheetState";
+import { listMyVersions, SheetVersion } from "../services/sheetEdits";
 import TranspositionSelector from "./TranspositionSelector.vue";
 import BaseButton from "./BaseButton.vue";
 import SongCredits from "./SongCredits.vue";
 import { keyName, musicalKey } from "../services/transposer";
 import InstrumentPicker from "./InstrumentPicker.vue";
 import BaseSelect from "./BaseSelect.vue";
+import { leaderSheetEdit } from "../services/bandSync/bandSyncStore";
 
 const props = defineProps<{
     songId: string;
@@ -163,6 +174,52 @@ const loadInstruments = async (sheetId: string) => {
     }
 }
 
+// The version shown is `sheetEdit` in sheetState (band sync publishes it when leading).
+// The leader's version is kept when the leader stops showing one, and dropped for a new song.
+
+const editIdFor = (sheetId: string) => (sheetEdit.value?.fileId === sheetId ? sheetEdit.value.editId : null)
+
+/** Shows the leader's version when it is one of this song's sheets; returns whether it did. */
+const followLeaderSheet = () => {
+    const leader = leaderSheetEdit.value
+    if (!leader || !sheets.value.some((s) => s.id === leader.fileId)) return false
+    sheetEdit.value = { ...leader }
+    renderSheet(leader.fileId)
+    return true
+}
+
+/** The user's own versions of the current sheet, for the Version picker. */
+const versions = ref([] as SheetVersion[])
+
+const loadVersions = async (sheetId: string) => {
+    try {
+        const mine = await listMyVersions(sheetId)
+        if (currentSheet.value === sheetId) versions.value = mine
+    } catch (e) {
+        // Offline or logged out: only the original and a followed version are offered
+        console.error(e)
+    }
+}
+
+const currentEditId = computed(() => (currentSheet.value ? editIdFor(currentSheet.value) : null))
+
+/** The Version picker; "" is the original. Switching renders the sheet in that version. */
+const selectedVersion = computed({
+    get: () => currentEditId.value ?? "",
+    set: (id: string) => {
+        if (!currentSheet.value) return
+        sheetEdit.value = { fileId: currentSheet.value, editId: id || null }
+        renderSheet(currentSheet.value)
+    },
+})
+
+/** Name for a shown version that isn't one of the user's own. */
+const otherVersionLabel = computed(() => {
+    const id = currentEditId.value
+    if (!id || versions.value.some((v) => v.id === id)) return null
+    return leaderSheetEdit.value?.editId === id ? "Leader's version" : "Shared"
+})
+
 // Song and transposition can change together (band sync); only the latest render wins.
 let renderGeneration = 0;
 
@@ -172,21 +229,29 @@ const renderSheet = async (sheetId: string) => {
     if (currentSheet.value !== sheetId) {
         sheetInstruments.value = [];
         selectedInstruments.value = [];
+        versions.value = [];
         loadInstruments(sheetId);
+        loadVersions(sheetId);
     }
     currentSheet.value = sheetId;
+    // Another sheet starts at its original, unless the leader's version was just applied
+    if (sheetEdit.value?.fileId !== sheetId) {
+        sheetEdit.value = { fileId: sheetId, editId: null };
+    }
     const transposition = parseInt(props.currentTransposition) + 12 * props.octave;
     const clef = props.clef;
     const instruments = [...selectedInstruments.value];
+    const editId = editIdFor(sheetId);
 
     // Show the saved copy right away, then swap in the fresh render if it differs
-    const cached = await cachedRender(sheetId, transposition, clef, instruments);
+    const cached = await cachedRender(sheetId, transposition, clef, instruments, editId);
     if (cached && generation === renderGeneration) {
         svg.value = cached.join("\n");
     }
 
     try {
-        const svgs = await fetchSheet(sheetId, transposition, clef, { instruments });
+        const svgs = await fetchSheet(sheetId, transposition, clef, { instruments, editId });
+        if (!svgs) throw new Error(`Couldn't render sheet ${sheetId}`);
         const fresh = svgs.join("\n");
 
         if (generation === renderGeneration && svg.value !== fresh) {
@@ -195,6 +260,12 @@ const renderSheet = async (sheetId: string) => {
     } catch (e) {
         if (generation !== renderGeneration) return;
         console.error(e)
+        // A version that can't be rendered (e.g. deleted, while band sync still points to it): show the original
+        if (editId && online.value) {
+            sheetEdit.value = { fileId: sheetId, editId: null };
+            renderSheet(sheetId);
+            return;
+        }
         // Keep showing the saved copy when the network fails
         if (cached) return;
         error.value = online.value
@@ -203,7 +274,7 @@ const renderSheet = async (sheetId: string) => {
     }
 };
 
-if (sheets.value.length === 1) {
+if (!followLeaderSheet() && sheets.value.length === 1) {
     renderSheet(sheets.value[0].id);
 }
 
@@ -216,15 +287,22 @@ watch(
     async () => {
         renderGeneration++;
         currentSheet.value = null;
+        sheetEdit.value = null;
         sheetInstruments.value = [];
         selectedInstruments.value = [];
         svg.value = null;
         sheets.value = await getSheets();
         song.value = await getSong(props.songId)
-        if (sheets.value.length === 1) {
+        if (!followLeaderSheet() && sheets.value.length === 1) {
             renderSheet(sheets.value[0].id);
         }
     }
+);
+
+// The leader picked another sheet or version
+watch(
+    () => leaderSheetEdit.value && `${leaderSheetEdit.value.fileId}:${leaderSheetEdit.value.editId}`,
+    () => followLeaderSheet(),
 );
 
 watch(

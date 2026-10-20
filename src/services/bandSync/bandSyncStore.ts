@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 import type { Unsubscribe } from "firebase/firestore";
 import { firebaseAuth } from "../auth";
 import { bandSyncService } from "./bandSyncService";
@@ -39,6 +39,16 @@ const initialState = (): State => ({
 });
 
 export const bandSyncState = reactive(initialState());
+
+/**
+ * The sheet and version (sheetEdits id, null for the original) the leader shows, while following.
+ * Null when there is nothing to follow.
+ */
+export const leaderSheetEdit = computed(() => {
+    const { role, followingLeaderUpdates, session } = bandSyncState;
+    if (role !== "member" || !followingLeaderUpdates || !session?.sheetFileId) return null;
+    return { fileId: session.sheetFileId, editId: session.sheetEditId };
+});
 
 type ActivePayload = {
     role: BandSyncRole;
@@ -308,6 +318,8 @@ export async function leaderPublish(payload: {
     songbookId: string;
     songNumber: number;
     transposition: number;
+    sheetFileId: string | null;
+    sheetEditId: string | null;
 }): Promise<void> {
     if (bandSyncState.role !== "leader" || !bandSyncState.code) {
         return;
@@ -325,6 +337,8 @@ export async function leaderPublish(payload: {
                 songbookId: payload.songbookId,
                 songNumber: payload.songNumber,
                 transposition: payload.transposition,
+                sheetFileId: payload.sheetFileId,
+                sheetEditId: payload.sheetEditId,
                 updatedAt: new Date(),
             };
         }

@@ -5,6 +5,7 @@ import {
     applyRemoteTransposition,
     collectionId,
     instrument,
+    sheetEdit,
     sheetTransposition,
     songId,
     songNumber,
@@ -19,6 +20,7 @@ import {
 import {
     BandSyncSession,
     hasLeaderStateChangedComparedTo,
+    matchesSheetEdit,
     matchesSongState,
     samePitchClass,
     sessionTranspositionFromApi,
@@ -55,11 +57,15 @@ class BandSyncCoordinator {
                 sessionSongNumber: bandSyncState.session?.songNumber,
                 sessionSongbookId: bandSyncState.session?.songbookId,
                 sessionUpdatedAt: bandSyncState.session?.updatedAt?.getTime(),
+                sessionSheetFileId: bandSyncState.session?.sheetFileId,
+                sessionSheetEditId: bandSyncState.session?.sheetEditId,
                 collectionId: collectionId.value,
                 songId: songId.value,
                 songNumber: songNumber.value,
                 sheetTransposition: sheetTransposition.value,
                 instrument: instrument.value,
+                sheetFileId: sheetEdit.value?.fileId,
+                sheetEditId: sheetEdit.value?.editId,
             }),
             () => this.onChange(),
             { deep: true },
@@ -110,7 +116,10 @@ class BandSyncCoordinator {
             parseInt(sheetTransposition.value) || 0,
             instrumentOffset(),
         );
-        return { songbookId, songNumber: number, transposition };
+        // The sheet and version shown; followers apply it in SheetViewer
+        const sheetFileId = sheetEdit.value?.fileId ?? null;
+        const sheetEditId = sheetEdit.value?.editId ?? null;
+        return { songbookId, songNumber: number, transposition, sheetFileId, sheetEditId };
     }
 
     private rememberLocalSong(): void {
@@ -155,7 +164,7 @@ class BandSyncCoordinator {
 
         if (!isActive || !session) return;
 
-        const { songbookId, songNumber, transposition } = this.getLocalState();
+        const { songbookId, songNumber, transposition, sheetFileId, sheetEditId } = this.getLocalState();
         const localKey = songKey(songbookId, songNumber);
         const localSongChanged =
             this.lastLocalSongKey != null && this.lastLocalSongKey !== localKey;
@@ -167,11 +176,14 @@ class BandSyncCoordinator {
                 return;
             }
 
-            if (matchesSongState(session, songbookId, songNumber, transposition)) {
+            if (
+                matchesSongState(session, songbookId, songNumber, transposition) &&
+                matchesSheetEdit(session, sheetFileId, sheetEditId)
+            ) {
                 return;
             }
 
-            void leaderPublish({ songbookId, songNumber, transposition });
+            void leaderPublish({ songbookId, songNumber, transposition, sheetFileId, sheetEditId });
             return;
         }
 
