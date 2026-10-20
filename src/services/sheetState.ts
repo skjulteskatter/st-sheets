@@ -1,5 +1,5 @@
 import { computed, ref, watch } from "vue";
-import { songService } from "./hiddentreasures";
+import { getSong } from "./collectionData";
 
 /**
  * What the viewer is showing. Lives outside Sheets.vue so band sync can read
@@ -40,6 +40,14 @@ export const octave = computed<number>({
     set: (v) => (_octave.value = v ? v.toString() : null),
 });
 
+export const MIN_ZOOM = 50;
+const _zoom = persisted("zoom");
+/** Sheet width in percent, remembered per device: lets tablets fit more of a sheet on screen. */
+export const zoom = computed<number>({
+    get: () => Math.min(100, Math.max(MIN_ZOOM, parseInt(_zoom.value ?? "100") || 100)),
+    set: (v) => (_zoom.value = v >= 100 ? null : v.toString()),
+});
+
 const resolvedSong = ref(null as { key: string; number: number | null } | null);
 
 function songKey(collection: string | null, song: string | null) {
@@ -72,7 +80,7 @@ export function startSongNumberResolver() {
                 return;
             }
             try {
-                const s = await songService.get(song);
+                const s = await getSong(song);
                 if (key === songKey(collectionId.value, songId.value)) {
                     resolvedSong.value = { key, number: s.getNumber(collection) };
                 }

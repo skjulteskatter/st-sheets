@@ -3,7 +3,7 @@
         <template #button>
             <button
                 type="button"
-                class="relative flex items-center justify-center shrink-0 w-[42px] h-[42px] bg-gray-50 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="icon-button"
                 :title="statusLabel ?? 'Band sync'"
                 @click="show ? close() : open()"
             >
@@ -90,7 +90,7 @@
                     Enter code
                     <input
                         v-model="codeInput"
-                        class="uppercase bg-gray-50 border border-gray-300 text-gray-900 text-sm block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        class="control control-default uppercase block w-full px-2.5"
                         @keyup.enter="joinSession"
                     />
                 </label>
@@ -123,7 +123,7 @@
 </template>
 <script lang="ts" setup>
 import { computed, onUnmounted, ref } from "vue";
-import { UserGroupIcon } from "@heroicons/vue/solid";
+import { UserGroupIcon } from "@heroicons/vue/outline";
 import Modal from "./Modal.vue";
 import BaseButton from "./BaseButton.vue";
 import { firebaseAuth } from "../services/auth";

@@ -5,8 +5,8 @@
             v-model:show="show"
         >
             <template #button>
-                <button @click="show = !show" type="button" class="bg-gray-50 rounded-full border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 p-1 focus:border-blue-500 block dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <CogIcon class="w-8 h-8"></CogIcon>
+                <button @click="show = !show" type="button" class="icon-button" title="Settings">
+                    <CogIcon class="w-5 h-5 shrink-0"></CogIcon>
                     <span class="sr-only">Settings</span>
                 </button>
             </template>
@@ -37,6 +37,20 @@
                     </BaseSelect>
                 </div>
             </div>
+            <div class="m-2 mt-4 border-t border-black/10 dark:border-white/20 pt-4">
+                <label>Saved sheets</label>
+                <p class="text-sm opacity-70 mb-2">
+                    Sheets you have viewed are saved on this device. Clearing them frees space;
+                    collections downloaded for offline use are kept.
+                </p>
+                <div class="flex items-center gap-3">
+                    <BaseButton :disabled="clearing || !viewed?.count" @click="clearViewedSheets">Clear viewed sheets</BaseButton>
+                    <span v-if="clearMessage" class="text-sm opacity-70">{{ clearMessage }}</span>
+                    <span v-else-if="viewed" class="text-sm opacity-70">
+                        {{ viewed.count ? `${sheetCount(viewed.count)}, about ${formatBytes(viewed.bytes)}` : "Nothing to clear" }}
+                    </span>
+                </div>
+            </div>
             <template #footer>
                 <div class="ml-auto flex">
                     <BaseButton @click="show = false" class="mr-2">Cancel</BaseButton>
@@ -47,13 +61,15 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
-import { CogIcon } from "@heroicons/vue/solid"
+import { computed, ref, watch } from 'vue';
+import { CogIcon } from "@heroicons/vue/outline"
 import Modal from './Modal.vue';
 import BaseSelect from './BaseSelect.vue';
 import InstrumentSelector from './InstrumentSelector.vue';
 import BaseButton from './BaseButton.vue';
 import auth from "../services/auth"
+import { clearUnpinnedSheets, measureSheets, SheetCacheSize } from "../services/offline/cachingClient"
+import { formatBytes } from "../utils/format"
 
 const show = ref(false)
 
@@ -97,4 +113,28 @@ const selectedClef = computed({
 })
 
 const logout = auth.logout
+
+const clearing = ref(false)
+const clearMessage = ref("")
+const viewed = ref(null as SheetCacheSize | null)
+
+const measure = async () => (viewed.value = await measureSheets(false))
+
+watch(show, (open) => {
+    clearMessage.value = ""
+    if (open) measure()
+})
+
+const sheetCount = (count: number) => (count === 1 ? "1 sheet" : `${count} sheets`)
+
+const clearViewedSheets = async () => {
+    clearing.value = true
+    try {
+        const { count, bytes } = await clearUnpinnedSheets()
+        clearMessage.value = `Cleared ${sheetCount(count)}` + (count ? ` (about ${formatBytes(bytes)} freed).` : ".")
+        await measure()
+    } finally {
+        clearing.value = false
+    }
+}
 </script>

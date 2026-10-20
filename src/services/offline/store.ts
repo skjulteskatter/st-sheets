@@ -58,6 +58,54 @@ export async function setMany(entries: [string, unknown][]): Promise<void> {
     });
 }
 
+/** Calls `visit` for every entry, read-only. */
+export async function forEach<T>(visit: (key: string, value: T) => void): Promise<void> {
+    const db = await open();
+    if (!db) return;
+    return new Promise((resolve) => {
+        try {
+            const tx = db.transaction(STORE, "readonly");
+            const request = tx.objectStore(STORE).openCursor();
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) return;
+                visit(String(cursor.key), cursor.value as T);
+                cursor.continue();
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = tx.onabort = () => resolve();
+        } catch {
+            resolve();
+        }
+    });
+}
+
+/** Deletes every entry `remove` returns true for; resolves to how many were deleted. */
+export async function removeWhere<T>(remove: (key: string, value: T) => boolean): Promise<number> {
+    const db = await open();
+    if (!db) return 0;
+    return new Promise((resolve) => {
+        let removed = 0;
+        try {
+            const tx = db.transaction(STORE, "readwrite");
+            const request = tx.objectStore(STORE).openCursor();
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) return;
+                if (remove(String(cursor.key), cursor.value as T)) {
+                    cursor.delete();
+                    removed++;
+                }
+                cursor.continue();
+            };
+            tx.oncomplete = () => resolve(removed);
+            tx.onerror = tx.onabort = () => resolve(0);
+        } catch {
+            resolve(0);
+        }
+    });
+}
+
 export async function clear(): Promise<void> {
     await run("readwrite", (s) => s.clear());
 }

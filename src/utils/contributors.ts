@@ -1,5 +1,5 @@
 import { ISong, ParticipantType } from "hiddentreasures-js";
-import { contributorService } from "../services/hiddentreasures";
+import { getContributors } from "../services/collectionData";
 
 export type Credits = {
     authors: string[];
@@ -15,9 +15,7 @@ export async function getCredits(song: ISong): Promise<Credits> {
                 .map((p) => p.contributorId),
         ),
     ];
-    const contributors = ids.length
-        ? await contributorService.retrieve({ itemIds: ids })
-        : [];
+    const contributors = ids.length ? await getContributors(ids) : [];
 
     const names = (type: ParticipantType) =>
         song.participants

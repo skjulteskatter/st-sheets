@@ -24,21 +24,37 @@
             <div v-if="currentSheet">
                 <label>Octave</label>
                 <div class="flex">
-                    <BaseButton class="px-3" @click="emit('update:octave', octave - 1)">
+                    <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave - 1)">
                         <MinusIcon class="w-4 h-4"></MinusIcon>
                         <span class="sr-only">Octave down</span>
                     </BaseButton>
                     <span class="w-10 self-center text-center">{{ octave > 0 ? "+" + octave : octave }}</span>
-                    <BaseButton class="px-3" @click="emit('update:octave', octave + 1)">
+                    <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave + 1)">
                         <PlusIcon class="w-4 h-4"></PlusIcon>
                         <span class="sr-only">Octave up</span>
                     </BaseButton>
                 </div>
             </div>
-            <SongCredits class="self-end" :songId="songId"></SongCredits>
+            <!-- Always shown so the row doesn't shift; usable once the sheet is drawn -->
+            <div>
+                <label>Zoom</label>
+                <div class="flex">
+                    <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom <= MIN_ZOOM" @click="zoom -= 10">
+                        <ZoomOutIcon class="w-4 h-4"></ZoomOutIcon>
+                        <span class="sr-only">Zoom out</span>
+                    </BaseButton>
+                    <span class="w-14 self-center text-center">{{ zoom }}%</span>
+                    <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom >= 100" @click="zoom += 10">
+                        <ZoomInIcon class="w-4 h-4"></ZoomInIcon>
+                        <span class="sr-only">Zoom in</span>
+                    </BaseButton>
+                </div>
+            </div>
+            <!-- Same height as the buttons, text centred against them -->
+            <SongCredits class="self-end h-[42px] flex flex-col justify-center" :songId="songId"></SongCredits>
         </div>
         <div v-if="svg" class="w-full content-center">
-            <SvgViewer class="max-w-4xl ml-auto mr-auto" :svg="svg"></SvgViewer>
+            <SvgViewer class="max-w-4xl ml-auto mr-auto" :style="{ width: zoom + '%' }" :svg="svg"></SvgViewer>
         </div>
         <div v-else-if="sheets.length > 1">
             <div
@@ -63,11 +79,12 @@
 </template>
 <script lang="ts" setup>
 import { ref, watch } from "vue";
-import { songService } from "../services/hiddentreasures";
-import { getSheetFiles, renderSheet as fetchSheet } from "../services/sheetRender";
+import { getSong } from "../services/collectionData";
+import { cachedRender, getSheetFiles, renderSheet as fetchSheet } from "../services/sheetRender";
 import { online } from "../services/offline/network";
 import SvgViewer from "./SvgViewer.vue";
-import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon } from "@heroicons/vue/outline";
+import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon, ZoomInIcon, ZoomOutIcon } from "@heroicons/vue/outline";
+import { MIN_ZOOM, zoom } from "../services/sheetState";
 import TranspositionSelector from "./TranspositionSelector.vue";
 import BaseButton from "./BaseButton.vue";
 import SongCredits from "./SongCredits.vue";
@@ -87,7 +104,7 @@ const emit = defineEmits<{
 
 const getSheets = () => getSheetFiles(props.songId);
 
-const song = ref(await songService.get(props.songId))
+const song = ref(await getSong(props.songId))
 const svg = ref(null as string | null);
 const sheets = ref(await getSheets());
 const currentSheet = ref(null as string | null)
@@ -102,19 +119,27 @@ const renderSheet = async (sheetId: string) => {
     error.value = null;
     currentSheet.value = sheetId;
     sheets.value = [];
-    try {
-        const svgs = await fetchSheet(
-            sheetId,
-            parseInt(props.currentTransposition) + 12 * props.octave,
-            props.clef,
-        );
+    const transposition = parseInt(props.currentTransposition) + 12 * props.octave;
+    const clef = props.clef;
 
-        if (generation === renderGeneration) {
-            svg.value = svgs.join("\n");
+    // Show the saved copy right away, then swap in the fresh render if it differs
+    const cached = await cachedRender(sheetId, transposition, clef);
+    if (cached && generation === renderGeneration) {
+        svg.value = cached.join("\n");
+    }
+
+    try {
+        const svgs = await fetchSheet(sheetId, transposition, clef);
+        const fresh = svgs.join("\n");
+
+        if (generation === renderGeneration && svg.value !== fresh) {
+            svg.value = fresh;
         }
     } catch (e) {
         if (generation !== renderGeneration) return;
         console.error(e)
+        // Keep showing the saved copy when the network fails
+        if (cached) return;
         error.value = online.value
             ? "Failed to render sheet. Check console for more details"
             : "This sheet is not downloaded in this key, clef and octave"
@@ -136,7 +161,7 @@ watch(
         currentSheet.value = null;
         svg.value = null;
         sheets.value = await getSheets();
-        song.value = await songService.get(props.songId)
+        song.value = await getSong(props.songId)
         if (sheets.value.length === 1) {
             renderSheet(sheets.value[0].id);
         }

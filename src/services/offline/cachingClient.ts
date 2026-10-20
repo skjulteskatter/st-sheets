@@ -18,11 +18,21 @@ const API_VERSION = "4.0";
 /** How long to wait for the network before answering from the cache, if there is a cached answer. */
 const CACHE_FALLBACK_MS = 5000;
 
+/**
+ * Song data that rarely changes: answered from the cache straight away when
+ * cached, and refreshed in the background for next time (stale-while-revalidate).
+ */
+const CACHE_FIRST_PATH = /^api\/(Songs|Files|Collections|Contributors)(?:[/?]|$)/;
+
 const MODEL_PATH = /^api\/(Songs|Files|Contributors|Collections|Sheets)(?:\/([^/?]+))?(?:\?.*)?$/;
 
 type ClientOptions = ConstructorParameters<typeof Client>[0];
-/** What is stored: the response plus when it was saved (ms since epoch). */
-type Entry = { value: unknown; savedAt: number };
+/**
+ * What is stored: the response plus when it was saved (ms since epoch).
+ * `pinned` marks responses saved by a collection download, which "clear
+ * viewed sheets" keeps.
+ */
+type Entry = { value: unknown; savedAt: number; pinned?: boolean };
 type HttpError = { status: number; value: string };
 
 function requestKey(method: string, path: string, body: unknown) {
@@ -50,17 +60,24 @@ function isHttpError(e: unknown): e is HttpError {
     return typeof (e as HttpError | null)?.status === "number";
 }
 
-async function save(key: string, path: string, value: unknown) {
+async function save(key: string, path: string, value: unknown, pin: boolean) {
     if (value === undefined) return;
-    const savedAt = Date.now();
-    const entries: [string, Entry][] = [[key, { value, savedAt }]];
+    const values: [string, unknown][] = [[key, value]];
     const endpoint = MODEL_PATH.exec(path)?.[1];
     if (endpoint) {
         for (const item of Array.isArray(value) ? value : [value]) {
-            if (hasId(item)) entries.push([itemKey(endpoint, item.id), { value: item, savedAt }]);
+            if (hasId(item)) values.push([itemKey(endpoint, item.id), item]);
         }
     }
-    await store.setMany(entries);
+    // Refreshing a downloaded response (e.g. viewing it online) must keep it pinned
+    const existing = pin ? [] : await store.getMany<Entry>(values.map(([k]) => k));
+    const savedAt = Date.now();
+    await store.setMany(
+        values.map(([k, v], i): [string, Entry] => [
+            k,
+            { value: v, savedAt, pinned: pin || existing[i]?.pinned || undefined },
+        ]),
+    );
 }
 
 async function lookup(method: string, path: string, body: unknown): Promise<unknown> {
@@ -81,8 +98,19 @@ async function lookup(method: string, path: string, body: unknown): Promise<unkn
 }
 
 export class CachingClient extends Client {
-    constructor(options: ClientOptions) {
-        super({ ...options, basePath: BASE_PATH, apiVersion: API_VERSION });
+    private readonly cacheFirst: boolean;
+    private readonly pin: boolean;
+
+    /**
+     * @param cacheFirst answer song data (CACHE_FIRST_PATH) from the cache when
+     *   available. Off for the offline download, which needs fresh `updatedAt`s.
+     * @param pin mark saved responses as downloaded, so clearing viewed sheets keeps them.
+     */
+    constructor(options: ClientOptions & { cacheFirst?: boolean; pin?: boolean }) {
+        const { cacheFirst = true, pin = false, ...rest } = options;
+        super({ ...rest, basePath: BASE_PATH, apiVersion: API_VERSION });
+        this.cacheFirst = cacheFirst;
+        this.pin = pin;
     }
 
     async apifetch(path: string, options: RequestInit, bypassAuth = false, json = true): Promise<any> {
@@ -102,10 +130,29 @@ export class CachingClient extends Client {
             return fromCache(new OfflineError(path));
         }
 
-        const network = this.fetchNetwork(path, options, bypassAuth, json).then(async (value) => {
-            await save(key, path, value);
-            return value;
-        });
+        const network = () =>
+            this.fetchNetwork(path, options, bypassAuth, json).then(async (value) => {
+                await save(key, path, value, this.pin);
+                return value;
+            });
+
+        if (this.cacheFirst && CACHE_FIRST_PATH.test(path)) {
+            const cached = await lookup(method, path, options.body);
+            if (cached !== undefined) {
+                network().catch(() => {});
+                return cached;
+            }
+        }
+
+        return this.networkFirst(network(), method, path, options.body);
+    }
+
+    private async networkFirst(network: Promise<unknown>, method: string, path: string, body: unknown) {
+        const fromCache = async (error: unknown) => {
+            const cached = await lookup(method, path, body);
+            if (cached === undefined) throw error;
+            return cached;
+        };
 
         const timedOut = Symbol();
         let result: unknown;
@@ -122,7 +169,7 @@ export class CachingClient extends Client {
         if (result !== timedOut) return result;
 
         // Slow network: answer from the cache if possible, the request keeps running and updates it
-        const cached = await lookup(method, path, options.body);
+        const cached = await lookup(method, path, body);
         if (cached !== undefined) {
             network.catch(() => {});
             return cached;
@@ -163,4 +210,69 @@ export async function cachedPostAt(path: string, content: unknown): Promise<numb
     return (await store.get<Entry>(requestKey("POST", path, JSON.stringify(content))))?.savedAt;
 }
 
+/** The cached response to `POST <path>` with `content`, or undefined if it isn't cached. */
+export function cachedPost<T>(path: string, content: unknown): Promise<T | undefined> {
+    return lookup("POST", path, JSON.stringify(content)) as Promise<T | undefined>;
+}
+
+/**
+ * Saves `value` as the response to `POST <path>` with `content`, as if it had
+ * been fetched. For answers derived from a bigger request, so the app's own
+ * smaller requests find them offline.
+ */
+export function seedPost(path: string, content: unknown, value: unknown, pin: boolean): Promise<void> {
+    return save(requestKey("POST", path, JSON.stringify(content)), path, value, pin);
+}
+
 export const clearCache = store.clear;
+
+/** Marks the cached response to `POST <path>` with `content` as downloaded, if cached. */
+export async function pinCachedPost(path: string, content: unknown): Promise<void> {
+    const key = requestKey("POST", path, JSON.stringify(content));
+    const entry = await store.get<Entry>(key);
+    if (entry && !entry.pinned) {
+        await store.setMany([[key, { ...entry, pinned: true }]]);
+    }
+}
+
+/** Approximate stored size in bytes. Rendered sheets are SVG strings, mostly ASCII, so characters ≈ bytes. */
+export function approximateSize(value: unknown): number {
+    if (typeof value === "string") return value.length;
+    if (Array.isArray(value)) return value.reduce((sum: number, v) => sum + approximateSize(v), 0);
+    return JSON.stringify(value)?.length ?? 0;
+}
+
+const SHEET_RENDER_PREFIX = requestKey("POST", "api/Sheets", "");
+
+/** A rendered sheet saved by viewing it, not by a collection download. */
+function isUnpinnedSheet(key: string, entry: Entry) {
+    return key.startsWith(SHEET_RENDER_PREFIX) && !entry.pinned;
+}
+
+export type SheetCacheSize = { count: number; bytes: number };
+
+/**
+ * How many rendered sheets are saved, and roughly how many bytes they take:
+ * downloaded ones (`pinned`) or viewed ones.
+ */
+export async function measureSheets(pinned: boolean): Promise<SheetCacheSize> {
+    const size = { count: 0, bytes: 0 };
+    await store.forEach<Entry>((key, entry) => {
+        if (key.startsWith(SHEET_RENDER_PREFIX) && !!entry.pinned === pinned) {
+            size.count++;
+            size.bytes += key.length + approximateSize(entry.value);
+        }
+    });
+    return size;
+}
+
+/** Deletes viewed (not downloaded) sheets; resolves to how many and roughly how many bytes. */
+export async function clearUnpinnedSheets(): Promise<SheetCacheSize> {
+    let bytes = 0;
+    const count = await store.removeWhere<Entry>((key, entry) => {
+        const remove = isUnpinnedSheet(key, entry);
+        if (remove) bytes += key.length + approximateSize(entry.value);
+        return remove;
+    });
+    return { count, bytes };
+}

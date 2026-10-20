@@ -1,6 +1,7 @@
-import { CollectionService, ContributorService, FileService, SongService } from "hiddentreasures-js";
-import client from "../hiddentreasures/client";
-import { getSheetFiles, renderedAt, renderSheet } from "../sheetRender";
+import { CollectionService, ContributorService, SheetService, SongService } from "hiddentreasures-js";
+import { downloadClient as client } from "../hiddentreasures/client";
+import { cachedRenderSize, pinRender, renderedAt, renderSheet } from "../sheetRender";
+import { approximateSize, seedPost } from "./cachingClient";
 import type { Clef } from "../sheetState";
 
 export type DownloadProgress = {
@@ -8,14 +9,16 @@ export type DownloadProgress = {
     total: number;
     /** Sheets already downloaded and unchanged since, so not rendered again. */
     skipped: number;
+    /** Roughly how many bytes the collection's sheets take on the device so far. */
+    bytes: number;
     /** Titles of songs where a request failed. */
     failed: string[];
 };
 
-// The render service (st-utilities) runs out of memory with several renders
-// in flight, so the download renders one sheet at a time and backs off on errors.
-const CONCURRENCY = 1;
-const CONTRIBUTOR_CHUNK = 100;
+// Two in flight overlaps one sheet's network round trips with another's render.
+// st-utilities renders one sheet at a time per instance, so more mostly takes
+// render capacity from people viewing sheets.
+const CONCURRENCY = 2;
 const RETRY_DELAYS_MS = [2000, 5000, 15000];
 /**
  * A saved render only counts as up to date if it was saved this long after the
@@ -53,6 +56,27 @@ export class RenderServiceDownError extends Error {}
  * Fresh service instances are used so the library's in-memory caches can't
  * skip a request that has to reach the offline cache.
  */
+/** The fields of a file (`POST api/Files`) the download needs. */
+type RawFile = { id: string; songId: string; type: string; updatedAt: string };
+
+/**
+ * Fetches every file of the collection's songs in one request, and saves it
+ * per song in the shape `FileService.childrenOf(songId)` requests it
+ * (`{ parentIds: [songId] }`), so the viewer finds each song's files offline.
+ * Songs without files get an empty list.
+ */
+async function fetchFilesBySong(collectionId: string, songIds: string[]) {
+    const files = await client.post<RawFile[]>("api/Files", { collectionIds: [collectionId] });
+    const bySong = new Map<string, RawFile[]>(songIds.map((id) => [id, []]));
+    for (const file of files) {
+        bySong.get(file.songId)?.push(file);
+    }
+    for (const [songId, songFiles] of bySong) {
+        await seedPost("api/Files", { parentIds: [songId] }, songFiles, true);
+    }
+    return bySong;
+}
+
 export async function downloadCollection(
     collectionId: string,
     options: { transposition: number; clef: Clef },
@@ -62,15 +86,15 @@ export async function downloadCollection(
     await new CollectionService(client).list();
     const songs = await new SongService(client).childrenOf(collectionId);
 
-    const contributorIds = [...new Set(songs.flatMap((s) => s.participants.map((p) => p.contributorId)))];
-    const contributors = new ContributorService(client);
-    for (let i = 0; i < contributorIds.length; i += CONTRIBUTOR_CHUNK) {
-        await contributors.retrieve({ itemIds: contributorIds.slice(i, i + CONTRIBUTOR_CHUNK) });
-    }
+    // All contributors in one request, the same one the app makes for credits
+    await new ContributorService(client).list();
 
-    const progress: DownloadProgress = { done: 0, total: songs.length, skipped: 0, failed: [] };
+    const filesBySong = await fetchFilesBySong(collectionId, songs.map((s) => s.id));
+
+    const progress: DownloadProgress = { done: 0, total: songs.length, skipped: 0, bytes: 0, failed: [] };
     onProgress({ ...progress });
 
+    const sheetService = new SheetService(client);
     const queue = [...songs];
     let consecutiveFailures = 0;
     const worker = async () => {
@@ -79,15 +103,22 @@ export async function downloadCollection(
                 throw new RenderServiceDownError("Sheet rendering keeps failing");
             }
             try {
-                const sheets = await getSheetFiles(song.id, new FileService(client));
+                const sheets = (filesBySong.get(song.id) ?? []).filter((f) => f.type === "sheetmusic");
                 for (const sheet of sheets) {
                     if (signal.aborted) return;
                     const savedAt = await renderedAt(sheet.id, options.transposition, options.clef);
                     if (savedAt !== undefined && savedAt > Date.parse(sheet.updatedAt) + BACKEND_CACHE_MARGIN_MS) {
+                        // May have been saved by viewing it; keep it when viewed sheets are cleared
+                        await pinRender(sheet.id, options.transposition, options.clef);
+                        progress.bytes += await cachedRenderSize(sheet.id, options.transposition, options.clef);
                         progress.skipped++;
                         continue;
                     }
-                    await withRetry(() => renderSheet(sheet.id, options.transposition, options.clef), signal);
+                    const pages = await withRetry(
+                        () => renderSheet(sheet.id, options.transposition, options.clef, sheetService),
+                        signal,
+                    );
+                    progress.bytes += approximateSize(pages);
                 }
                 consecutiveFailures = 0;
             } catch (e) {

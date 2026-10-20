@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    /* Same background as the app, also behind content taller or wider than the screen */
+    body {
+        @apply bg-white dark:bg-black;
+    }
+
+    /* The app never scrolls sideways; anything too wide is fixed below, this is the safety net */
+    html,
+    body {
+        overflow-x: hidden;
+        overflow-x: clip;
+    }
+}
+
+@layer components {
+    /* Sheet pages scale down to the available width, never past it */
+    #svg-viewer svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+@layer components {
+    /* One look for every control (selects, buttons, inputs, icon buttons) so they line up. */
+    .control {
+        @apply h-[42px] rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
+    }
+
+    .control-default {
+        @apply border-gray-300 bg-gray-50 text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600;
+    }
+
+    .icon-button {
+        @apply control control-default relative flex w-[42px] shrink-0 items-center justify-center;
+    }
+}

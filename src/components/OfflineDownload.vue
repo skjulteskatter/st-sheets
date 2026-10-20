@@ -3,7 +3,7 @@
         <template #button>
             <button
                 type="button"
-                class="relative flex items-center justify-center shrink-0 w-[42px] h-[42px] bg-gray-50 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="icon-button"
                 :title="online ? 'Download for offline' : 'Offline'"
                 @click="show = !show"
             >
@@ -50,6 +50,7 @@
                     </div>
                     <p class="text-sm opacity-70">
                         {{ progress.done }} / {{ progress.total }} songs
+                        · about {{ formatBytes(progress.bytes) }}
                         <span v-if="progress.skipped">· {{ progress.skipped }} sheet(s) already up to date</span>
                     </p>
                 </div>
@@ -67,11 +68,17 @@
             <p v-else class="text-sm opacity-70">Select a collection to download it.</p>
 
             <div v-if="downloads.length" class="border-t border-black/10 dark:border-white/20 pt-4">
-                <p class="font-semibold text-sm mb-2">Downloaded</p>
+                <p class="font-semibold text-sm mb-2">
+                    Downloaded
+                    <span v-if="downloaded?.count" class="font-normal opacity-70">
+                        · {{ downloaded.count }} sheets, about {{ formatBytes(downloaded.bytes) }} in total
+                    </span>
+                </p>
                 <ul class="text-sm opacity-80">
                     <li v-for="d in downloads" :key="downloadKey(d)">
                         {{ d.title }} · {{ instrumentName(d.instrument) }} instrument · {{ d.clef }}
                         <span v-if="d.octave">· octave {{ d.octave > 0 ? "+" + d.octave : d.octave }}</span>
+                        <span v-if="d.bytes">· about {{ formatBytes(d.bytes) }}</span>
                         <span class="opacity-60"> · {{ new Date(d.date).toLocaleDateString() }}</span>
                     </li>
                 </ul>
@@ -99,7 +106,8 @@ import { collectionService } from "../services/hiddentreasures";
 import { instrumentName } from "../utils/instruments";
 import { Clef, clef, instrument, octave } from "../services/sheetState";
 import { online } from "../services/offline/network";
-import { clearCache } from "../services/offline/cachingClient";
+import { clearCache, measureSheets, SheetCacheSize } from "../services/offline/cachingClient";
+import { formatBytes } from "../utils/format";
 import {
     downloadCollection,
     DownloadProgress,
@@ -117,12 +125,15 @@ type Download = {
     clef: Clef;
     octave: number;
     date: string;
+    /** Roughly how many bytes its sheets take; missing for downloads made before this was tracked. */
+    bytes?: number;
 };
 
 const DOWNLOADS_KEY = "offlineDownloads";
 
 const show = ref(false);
-const downloadInstrument = ref(instrument.value);
+// No instrument chosen in Settings means C (0), which the selector needs spelled out
+const downloadInstrument = ref(instrument.value ?? "0");
 const downloadClef = ref<Clef>(clef.value);
 const running = ref(false);
 const progress = ref(null as DownloadProgress | null);
@@ -132,10 +143,15 @@ let controller: AbortController | null = null;
 
 watch(downloads, (v) => localStorage.setItem(DOWNLOADS_KEY, JSON.stringify(v)), { deep: true });
 
+/** All downloaded sheets on the device; overlaps between downloads are counted once. */
+const downloaded = ref(null as SheetCacheSize | null);
+const measureDownloaded = async () => (downloaded.value = await measureSheets(true));
+
 // Default to the current settings each time the dialog opens
 watch(show, (v) => {
+    if (v) measureDownloaded();
     if (v && !running.value) {
-        downloadInstrument.value = instrument.value;
+        downloadInstrument.value = instrument.value ?? "0";
         downloadClef.value = clef.value;
         progress.value = null;
         message.value = "";
@@ -191,6 +207,7 @@ const start = async () => {
                 title: collectionTitle.value,
                 ...options,
                 date: new Date().toISOString(),
+                bytes: (progress.value as DownloadProgress | null)?.bytes,
             };
             downloads.value = [
                 ...downloads.value.filter((d) => downloadKey(d) !== downloadKey(entry)),
@@ -209,6 +226,7 @@ const start = async () => {
     } finally {
         running.value = false;
         controller = null;
+        measureDownloaded();
     }
 };
 
@@ -217,6 +235,7 @@ const cancel = () => controller?.abort();
 const removeAll = async () => {
     await clearCache();
     downloads.value = [];
+    downloaded.value = null;
     message.value = "Downloads removed.";
 };
 </script>

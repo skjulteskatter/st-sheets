@@ -1,5 +1,5 @@
 <template>
-    <div class="w-screen h-screen grid place-items-center p-4">
+    <div class="w-full min-h-screen grid place-items-center p-4">
         <div class="w-full max-w-sm flex flex-col gap-4">
             <h1 class="text-2xl font-bold">Sign in</h1>
 
@@ -71,7 +71,7 @@ import BaseButton from "../components/BaseButton.vue";
 import auth, { AuthException, Provider } from "../services/auth";
 
 const inputClass =
-    "bg-gray-50 border border-gray-300 text-gray-900 text-sm block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
+    "control control-default block w-full px-2.5";
 
 const email = ref("");
 const password = ref("");

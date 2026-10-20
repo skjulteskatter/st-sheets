@@ -1,5 +1,5 @@
 <template>
-    <div class="font-sans h-screen w-screen bg-white dark:bg-black dark:text-white" v-if="ready">
+    <div class="font-sans min-h-screen w-full bg-white dark:bg-black dark:text-white" v-if="ready">
         <div v-if="authenticated">
             <Suspense>
                 <template #default>

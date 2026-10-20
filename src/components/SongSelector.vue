@@ -19,7 +19,7 @@
 <script lang="ts" setup>
 import { Song } from "hiddentreasures-js";
 import { computed, ref, watch } from "vue";
-import { songService } from "../services/hiddentreasures";
+import { getCollectionSongs } from "../services/collectionData";
 import Modal from "./Modal.vue";
 
 const props = defineProps<{
@@ -42,7 +42,7 @@ const sort = (songs: Song[]) => {
 
 const showModal = ref(false);
 
-const songs = ref(sort(await songService.childrenOf(props.collectionId)));
+const songs = ref(sort(await getCollectionSongs(props.collectionId)));
 
 const title = computed(() => {
     const song = songs.value.find((i) => i.id === props.song);
@@ -60,7 +60,7 @@ const setSong = (song: Song) => {
 watch(
     () => props.collectionId,
     async (first) => {
-        songs.value = sort(await songService.childrenOf(first));
+        songs.value = sort(await getCollectionSongs(first));
     }
 );
 </script>

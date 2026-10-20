@@ -6,7 +6,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, watch } from "vue";
-import { songService } from "../services/hiddentreasures";
+import { getSong } from "../services/collectionData";
 import { Credits, getCredits } from "../utils/contributors";
 
 const props = defineProps<{
@@ -20,7 +20,7 @@ watch(
     async (id) => {
         credits.value = null;
         try {
-            const result = await getCredits(await songService.get(id));
+            const result = await getCredits(await getSong(id));
             if (props.songId === id) {
                 credits.value = result;
             }

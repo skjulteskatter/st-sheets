@@ -1,8 +1,9 @@
 <template>
     <div>
-        <div class="p-4 w-full flex dark:text-white">
+        <div class="p-4 w-full flex flex-wrap items-end gap-2 dark:text-white">
+            <!-- Wraps on narrow screens; items keep their width (up to the screen) instead of being squeezed -->
             <CollectionSelector
-                class="ml-2 flex-col-1"
+                class="shrink-0 max-w-full"
                 v-model:collection="collectionId"
             ></CollectionSelector>
             <!-- <TranspositionSelector
@@ -12,7 +13,7 @@
             <Suspense v-if="collectionId">
                 <template #default>
                     <SongSelector
-                        class="ml-2"
+                        class="shrink-0 max-w-full"
                         :collectionId="collectionId"
                         v-model:song="song"
                     >
@@ -20,23 +21,17 @@
                 </template>
                 <template #fallback> Loading... </template>
             </Suspense>
-            <BandSync
-                class="ml-2 self-end shrink-0"
-                :startContext="bandSyncStartContext"
-            ></BandSync>
-            <OfflineDownload
-                class="ml-2 self-end shrink-0"
-                :collectionId="collectionId"
-            ></OfflineDownload>
+            <div class="flex gap-2 shrink-0">
+                <BandSync :startContext="bandSyncStartContext"></BandSync>
+                <OfflineDownload :collectionId="collectionId"></OfflineDownload>
+                <Settings
+                    v-model:transposition="transposition"
+                    v-model:theme="theme"
+                    v-model:clef="clef"
+                ></Settings>
+            </div>
         </div>
         <BandSyncOutOfSyncBar></BandSyncOutOfSyncBar>
-        <Settings
-            class="fixed top-0 right-0 p-8 z-50"
-            v-model:transposition="transposition"
-            v-model:theme="theme"
-            v-model:clef="clef"
-        >
-        </Settings>
         <div>
             <Suspense v-if="song">
                 <template #default>

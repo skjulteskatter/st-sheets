@@ -1,5 +1,5 @@
 import { watch } from "vue";
-import { songService } from "../hiddentreasures";
+import { getCollectionSongs } from "../collectionData";
 import {
     applyRemoteSong,
     applyRemoteTransposition,
@@ -256,7 +256,7 @@ class BandSyncCoordinator {
                 return false;
             }
 
-            const songs = await songService.childrenOf(session.songbookId);
+            const songs = await getCollectionSongs(session.songbookId);
             const target = songs.find(
                 (s) => s.getNumber(session.songbookId) == session.songNumber,
             );
