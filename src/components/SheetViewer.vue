@@ -62,7 +62,9 @@
 </template>
 <script lang="ts" setup>
 import { ref, watch } from "vue";
-import { sheetService, fileService, songService } from "../services/hiddentreasures";
+import { songService } from "../services/hiddentreasures";
+import { getSheetFiles, renderSheet as fetchSheet } from "../services/sheetRender";
+import { online } from "../services/offline/network";
 import SvgViewer from "./SvgViewer.vue";
 import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon } from "@heroicons/vue/outline";
 import TranspositionSelector from "./TranspositionSelector.vue";
@@ -81,10 +83,7 @@ const emit = defineEmits<{
     (e: "update:octave", value: number): void;
 }>();
 
-const getSheets = async () => {
-    const files = await fileService.childrenOf(props.songId);
-    return files.filter((f) => f.type === "sheetmusic");
-};
+const getSheets = () => getSheetFiles(props.songId);
 
 const song = ref(await songService.get(props.songId))
 const svg = ref(null as string | null);
@@ -102,11 +101,11 @@ const renderSheet = async (sheetId: string) => {
     currentSheet.value = sheetId;
     sheets.value = [];
     try {
-        const svgs = await sheetService.render({
-            id: sheetId,
-            transposition: parseInt(props.currentTransposition) + 12 * props.octave,
-            clef: props.clef,
-        });
+        const svgs = await fetchSheet(
+            sheetId,
+            parseInt(props.currentTransposition) + 12 * props.octave,
+            props.clef,
+        );
 
         if (generation === renderGeneration) {
             svg.value = svgs.join("\n");
@@ -114,7 +113,9 @@ const renderSheet = async (sheetId: string) => {
     } catch (e) {
         if (generation !== renderGeneration) return;
         console.error(e)
-        error.value = "Failed to render sheet. Check console for more details"
+        error.value = online.value
+            ? "Failed to render sheet. Check console for more details"
+            : "This sheet is not downloaded in this key, clef and octave"
     }
 };
 

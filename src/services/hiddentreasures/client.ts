@@ -1,7 +1,6 @@
-import { Client } from "hiddentreasures-js";
 import auth from "../auth";
+import { CachingClient } from "../offline/cachingClient";
 
-export default new Client({
-    basePath: "https://api.songtreasures.app/",
+export default new CachingClient({
     getToken: async () => (await auth.getToken()) ?? "",
 });

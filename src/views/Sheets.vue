@@ -21,9 +21,13 @@
                 <template #fallback> Loading... </template>
             </Suspense>
             <BandSync
-                class="ml-2 self-end"
+                class="ml-2 self-end shrink-0"
                 :startContext="bandSyncStartContext"
             ></BandSync>
+            <OfflineDownload
+                class="ml-2 self-end shrink-0"
+                :collectionId="collectionId"
+            ></OfflineDownload>
             <SongCredits
                 v-if="song"
                 class="ml-4 self-end"
@@ -61,6 +65,7 @@ import SongSelector from "../components/SongSelector.vue";
 import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
 import BandSync from "../components/BandSync.vue";
+import OfflineDownload from "../components/OfflineDownload.vue";
 import BandSyncOutOfSyncBar from "../components/BandSyncOutOfSyncBar.vue";
 import SongCredits from "../components/SongCredits.vue";
 import themes from "../services/themes";

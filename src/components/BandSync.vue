@@ -3,11 +3,11 @@
         <template #button>
             <button
                 type="button"
-                class="relative bg-gray-50 border border-gray-300 text-gray-900 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="relative flex items-center justify-center shrink-0 w-[42px] h-[42px] bg-gray-50 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 :title="statusLabel ?? 'Band sync'"
                 @click="show ? close() : open()"
             >
-                <UserGroupIcon class="w-5 h-5"></UserGroupIcon>
+                <UserGroupIcon class="w-5 h-5 shrink-0"></UserGroupIcon>
                 <span
                     v-if="indicatorColor"
                     class="absolute -right-0.5 -top-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-700"
