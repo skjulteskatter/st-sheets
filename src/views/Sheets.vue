@@ -28,11 +28,6 @@
                 class="ml-2 self-end shrink-0"
                 :collectionId="collectionId"
             ></OfflineDownload>
-            <SongCredits
-                v-if="song"
-                class="ml-4 self-end"
-                :songId="song"
-            ></SongCredits>
         </div>
         <BandSyncOutOfSyncBar></BandSyncOutOfSyncBar>
         <Settings
@@ -67,7 +62,6 @@ import Settings from "../components/Settings.vue";
 import BandSync from "../components/BandSync.vue";
 import OfflineDownload from "../components/OfflineDownload.vue";
 import BandSyncOutOfSyncBar from "../components/BandSyncOutOfSyncBar.vue";
-import SongCredits from "../components/SongCredits.vue";
 import themes from "../services/themes";
 import {
     clef,

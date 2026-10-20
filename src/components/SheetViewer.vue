@@ -35,6 +35,7 @@
                     </BaseButton>
                 </div>
             </div>
+            <SongCredits class="self-end" :songId="songId"></SongCredits>
         </div>
         <div v-if="svg" class="w-full content-center">
             <SvgViewer class="max-w-4xl ml-auto mr-auto" :svg="svg"></SvgViewer>
@@ -69,6 +70,7 @@ import SvgViewer from "./SvgViewer.vue";
 import { DotsCircleHorizontalIcon, MinusIcon, PlusIcon } from "@heroicons/vue/outline";
 import TranspositionSelector from "./TranspositionSelector.vue";
 import BaseButton from "./BaseButton.vue";
+import SongCredits from "./SongCredits.vue";
 
 const props = defineProps<{
     songId: string;
