@@ -104,6 +104,12 @@ export function selectSong(id: string | null) {
     sheetTransposition.value = instrument.value ?? "0";
 }
 
+/** Opens a song from another collection (e.g. a search result), switching to that collection. */
+export function selectSongInCollection(collection: string, song: string) {
+    selectCollection(collection);
+    selectSong(song);
+}
+
 export function selectInstrument(value: string | null) {
     instrument.value = value;
     sheetTransposition.value = value ?? "0";

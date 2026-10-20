@@ -16,6 +16,7 @@
                         class="shrink-0 max-w-full"
                         :collectionId="collectionId"
                         v-model:song="song"
+                        @open="selectSongInCollection"
                     >
                     </SongSelector>
                 </template>
@@ -68,6 +69,7 @@ import {
     selectCollection,
     selectInstrument,
     selectSong,
+    selectSongInCollection,
     sheetTransposition,
     songId,
     songNumber,

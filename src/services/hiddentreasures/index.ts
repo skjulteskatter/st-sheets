@@ -3,6 +3,7 @@ import contributorService from "./contributorService";
 import songService from "./songService";
 import sheetService from "./sheetService";
 import fileService from "./fileService";
+import searchService from "./searchService";
 
 export {
     collectionService,
@@ -10,4 +11,5 @@ export {
     songService,
     sheetService,
     fileService,
+    searchService,
 };
