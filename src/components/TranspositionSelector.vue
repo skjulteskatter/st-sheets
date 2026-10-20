@@ -1,6 +1,6 @@
 <template>
     <div>
-        <label class="text-white" for="transposition-select"
+        <label for="transposition-select"
             >Transposition</label
         >
         <BaseSelect

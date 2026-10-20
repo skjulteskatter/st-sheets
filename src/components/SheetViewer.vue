@@ -1,57 +1,54 @@
 <template>
     <div class="max-w-4xl ml-auto mr-auto">
-        <div class="flex flex-wrap m-4 gap-4">
-            <div>
-                <label>Key</label>
-                <BaseButton class="w-full">
-                    {{song.originalKey}}
-                </BaseButton>
-            </div>
-            <div>
-                <label>Verses</label>
-                <BaseButton class="w-full">
-                    {{song.verses}}
-                </BaseButton>
-            </div>
-            <div class="max-w-sm" v-if="currentSheet">
-                <TranspositionSelector
-                    :transposition="currentTransposition"
-                    :original="song.originalKey"
-                    :relative="parseInt(transposition)"
-                    @update:transposition="transpose"
-                ></TranspositionSelector>
-            </div>
-            <div v-if="currentSheet">
-                <label>Octave</label>
-                <div class="flex">
-                    <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave - 1)">
-                        <MinusIcon class="w-4 h-4"></MinusIcon>
-                        <span class="sr-only">Octave down</span>
-                    </BaseButton>
-                    <span class="w-10 self-center text-center">{{ octave > 0 ? "+" + octave : octave }}</span>
-                    <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave + 1)">
-                        <PlusIcon class="w-4 h-4"></PlusIcon>
-                        <span class="sr-only">Octave up</span>
-                    </BaseButton>
+        <!-- Song info card, then the controls card; side by side, stacked on narrow screens -->
+        <div class="flex flex-wrap items-stretch gap-3 m-4">
+            <div class="card flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-normal">
+                <SongCredits :songId="songId"></SongCredits>
+                <div class="opacity-70">
+                    <p v-if="song.originalKey">Key: <span class="font-semibold">{{ song.originalKey }}</span></p>
+                    <p v-if="song.verses">Verses: <span class="font-semibold">{{ song.verses }}</span></p>
                 </div>
             </div>
-            <!-- Always shown so the row doesn't shift; usable once the sheet is drawn -->
-            <div>
-                <label>Zoom</label>
-                <div class="flex">
-                    <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom <= MIN_ZOOM" @click="zoom -= 10">
-                        <ZoomOutIcon class="w-4 h-4"></ZoomOutIcon>
-                        <span class="sr-only">Zoom out</span>
-                    </BaseButton>
-                    <span class="w-14 self-center text-center">{{ zoom }}%</span>
-                    <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom >= 100" @click="zoom += 10">
-                        <ZoomInIcon class="w-4 h-4"></ZoomInIcon>
-                        <span class="sr-only">Zoom in</span>
-                    </BaseButton>
+            <!-- Right-aligned; smaller text than the top bar: labels and values (octave, zoom %) -->
+            <div class="card ml-auto flex flex-wrap gap-x-3 gap-y-2 text-sm [&_label]:block [&_label]:mb-0.5 [&_label]:text-xs [&_label]:opacity-70">
+                <div class="max-w-sm" v-if="currentSheet">
+                    <TranspositionSelector
+                        :transposition="currentTransposition"
+                        :original="song.originalKey"
+                        :relative="parseInt(transposition)"
+                        @update:transposition="transpose"
+                    ></TranspositionSelector>
+                </div>
+                <div v-if="currentSheet">
+                    <label>Octave</label>
+                    <div class="flex">
+                        <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave - 1)">
+                            <MinusIcon class="w-4 h-4"></MinusIcon>
+                            <span class="sr-only">Octave down</span>
+                        </BaseButton>
+                        <span class="w-8 self-center text-center">{{ octave > 0 ? "+" + octave : octave }}</span>
+                        <BaseButton class="w-[42px] !px-0" @click="emit('update:octave', octave + 1)">
+                            <PlusIcon class="w-4 h-4"></PlusIcon>
+                            <span class="sr-only">Octave up</span>
+                        </BaseButton>
+                    </div>
+                </div>
+                <!-- Always shown so the row doesn't shift; usable once the sheet is drawn -->
+                <div>
+                    <label>Zoom</label>
+                    <div class="flex">
+                        <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom <= MIN_ZOOM" @click="zoom -= 10">
+                            <ZoomOutIcon class="w-4 h-4"></ZoomOutIcon>
+                            <span class="sr-only">Zoom out</span>
+                        </BaseButton>
+                        <span class="w-12 self-center text-center">{{ zoom }}%</span>
+                        <BaseButton class="w-[42px] !px-0" :disabled="!svg || zoom >= 100" @click="zoom += 10">
+                            <ZoomInIcon class="w-4 h-4"></ZoomInIcon>
+                            <span class="sr-only">Zoom in</span>
+                        </BaseButton>
+                    </div>
                 </div>
             </div>
-            <!-- Same height as the buttons, text centred against them -->
-            <SongCredits class="self-end h-[42px] flex flex-col justify-center" :songId="songId"></SongCredits>
         </div>
         <div v-if="svg" class="w-full content-center">
             <SvgViewer class="max-w-4xl ml-auto mr-auto" :style="{ width: zoom + '%' }" :svg="svg"></SvgViewer>

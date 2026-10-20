@@ -36,14 +36,16 @@
                     </ul>
                 </template>
 
-                <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-1.5">
+                <!-- 10 per row (5 on narrow screens, e.g. split view), so 1-10, 11-20, ... line up and a number is easy to find -->
+                <div v-else class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
                     <button
                         v-for="s in songs"
                         :key="s.id"
                         type="button"
-                        class="control tabular-nums"
+                        class="control px-0 text-sm tabular-nums [grid-column-start:var(--col-5)] sm:[grid-column-start:var(--col-10)]"
                         :class="s.id === song ? selectedClass : 'control-default'"
                         :title="s.title"
+                        :style="gridColumn(s)"
                         @click="setSong(s)"
                     >
                         {{ s.getNumber(collectionId) }}
@@ -99,6 +101,15 @@ const title = computed(() => {
     }
     return song.getNumber(props.collectionId) + " - " + song.title;
 });
+
+/**
+ * The song's column by number, for 5 and 10 per row, so gaps in the numbering
+ * keep the columns aligned. Used by the grid-column-start classes per breakpoint.
+ */
+const gridColumn = (song: Song) => {
+    const n = song.getNumber(props.collectionId);
+    return n && n > 0 ? { "--col-5": ((n - 1) % 5) + 1, "--col-10": ((n - 1) % 10) + 1 } : {};
+};
 
 const setSong = (song: Song) => {
     emit("update:song", song.id);

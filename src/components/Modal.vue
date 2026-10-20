@@ -11,10 +11,12 @@
         </slot>
         <div
             v-if="show"
-            class="fixed overflow-y-scroll left-0 top-0 z-50 md:inset-0 justify-center content-center"
+            class="fixed inset-0 z-50 overflow-y-auto bg-black/50"
+            @click.self="close"
         >
-            <div class="p-4 items-center max-h-screen">
-                <div class="bg-white max-w-2xl ml-auto mr-auto rounded-lg shadow dark:bg-slate-800">
+            <!-- Covers the screen on every size: the panel gets the full width (up to max-w-2xl), centred -->
+            <div class="p-4" @click.self="close">
+                <div class="bg-white w-full max-w-2xl ml-auto mr-auto rounded-lg shadow dark:bg-slate-800">
                     <div
                         class="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600"
                     >
