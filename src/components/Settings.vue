@@ -40,6 +40,12 @@
                     </BaseSelect>
                 </div>
                 <div class="m-2">
+                    <label>Language</label>
+                    <BaseSelect v-model="selectedLanguage">
+                        <option v-for="l in languages" :key="l.key" :value="l.key">{{ l.name }}</option>
+                    </BaseSelect>
+                </div>
+                <div class="m-2">
                     <label>Keep screen on</label>
                     <BaseSelect v-model="selectedKeepScreenOn" :disabled="!wakeLockSupported">
                         <option value="on">On</option>
@@ -82,6 +88,7 @@ import auth from "../services/auth"
 import { keepScreenOn, wakeLockSupported } from "../services/wakeLock"
 import { clearUnpinnedSheets, measureSheets, SheetCacheSize } from "../services/offline/cachingClient"
 import { formatBytes } from "../utils/format"
+import { language, languages, setLanguage } from "../services/language"
 
 const show = ref(false)
 
@@ -129,6 +136,11 @@ const logout = auth.logout
 const selectedKeepScreenOn = computed({
     get: () => (keepScreenOn.value ? "on" : "off"),
     set: (v) => (keepScreenOn.value = v === "on"),
+})
+
+const selectedLanguage = computed({
+    get: () => language,
+    set: (v) => setLanguage(v ?? "en"),
 })
 
 const clearing = ref(false)

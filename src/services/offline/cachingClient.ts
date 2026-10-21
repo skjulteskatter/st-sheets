@@ -1,5 +1,6 @@
 import { Client } from "hiddentreasures-js";
 import * as store from "./store";
+import { withLanguage, withoutLanguage } from "../language";
 
 /**
  * API client that saves every GET/POST response in IndexedDB and serves it
@@ -83,6 +84,12 @@ async function save(key: string, path: string, value: unknown, pin: boolean) {
 async function lookup(method: string, path: string, body: unknown): Promise<unknown> {
     const exact = await store.get<Entry>(requestKey(method, path, body));
     if (exact !== undefined) return exact.value;
+    // Saved before the language setting, e.g. an earlier offline download
+    const legacyPath = withoutLanguage(path);
+    if (legacyPath !== path) {
+        const legacy = await store.get<Entry>(requestKey(method, legacyPath, body));
+        if (legacy !== undefined) return legacy.value;
+    }
 
     const [, endpoint, id] = MODEL_PATH.exec(path) ?? [];
     if (!endpoint) return undefined;
@@ -114,6 +121,8 @@ export class CachingClient extends Client {
     }
 
     async apifetch(path: string, options: RequestInit, bypassAuth = false, json = true): Promise<any> {
+        // Part of the path, so cached responses are per language
+        path = withLanguage(path);
         const method = options.method ?? "GET";
         if (method !== "GET" && method !== "POST") {
             return this.fetchNetwork(path, options, bypassAuth, json);
