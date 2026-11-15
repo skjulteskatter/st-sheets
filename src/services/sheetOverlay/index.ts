@@ -7,9 +7,9 @@ export { harmonyBelow } from "./secondVoice";
 export type OverlayOptions = {
     /** a second staff under each system with the chords as block notes */
     chords: boolean;
-    /** a second voice (third below, fitted to the chords) in the melody staff */
+    /** a harmony (third below, fitted to the chords) in the melody staff */
     voice: boolean;
-    /** colour of the second voice */
+    /** colour of the harmony */
     voiceColor: string;
 };
 

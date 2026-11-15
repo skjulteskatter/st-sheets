@@ -4,7 +4,7 @@ import { type Chord, LET } from "./chords";
 import type { Layout } from "./layout";
 
 /**
- * A second voice under the melody: by default a diatonic third below (the key signature's
+ * A harmony voice under the melody: by default a diatonic third below (the key signature's
  * accidentals, so a major or minor third depending on the degree). When that note is not a
  * tone of the current chord, it is adjusted to the nearest chord tone below the melody.
  *

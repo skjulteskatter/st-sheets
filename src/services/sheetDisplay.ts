@@ -9,9 +9,9 @@ export const DEFAULT_VOICE_COLOR = "#2563eb";
 type Display = {
     /** a second staff under each system with the chords as block notes */
     chords: boolean;
-    /** a second voice, a third below the melody and fitted to the chords */
+    /** a harmony voice, a third below the melody and fitted to the chords */
     voice: boolean;
-    /** colour of the second voice */
+    /** colour of the harmony */
     voiceColor: string;
 };
 

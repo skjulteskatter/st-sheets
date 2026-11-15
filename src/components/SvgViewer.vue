@@ -17,7 +17,7 @@ const root = ref(null as HTMLElement | null)
 let enhanceGeneration = 0;
 
 /**
- * Adds what is chosen in the Display menu (chord staff, second voice) to the pages. A page can
+ * Adds what is chosen in the Display menu (chord staff, harmony) to the pages. A page can
  * only be measured while it is shown, so this waits for that and tries again for a moment.
  */
 const enhance = async () => {

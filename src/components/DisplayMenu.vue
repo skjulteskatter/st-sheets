@@ -34,14 +34,14 @@
                             type="checkbox"
                             class="w-5 h-5 accent-blue-600"
                         />
-                        Second voice
+                        Harmony
                     </label>
                     <p class="text-xs opacity-60 mt-1 max-w-[16rem]">
                         A third below the melody, adjusted to fit the chords.
                     </p>
                 </div>
                 <div class="m-2">
-                    <label>Second voice color</label>
+                    <label>Harmony color</label>
                     <div class="flex items-center gap-2">
                         <input
                             v-model="display.voiceColor"
