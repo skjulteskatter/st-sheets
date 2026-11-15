@@ -25,6 +25,7 @@
             <div class="flex gap-2 shrink-0">
                 <BandSync :startContext="bandSyncStartContext"></BandSync>
                 <OfflineDownload :collectionId="collectionId"></OfflineDownload>
+                <DisplayMenu></DisplayMenu>
                 <Settings
                     v-model:transposition="transposition"
                     v-model:theme="theme"
@@ -56,6 +57,7 @@ import CollectionSelector from "../components/CollectionSelector.vue";
 import SongSelector from "../components/SongSelector.vue";
 import SheetViewer from "../components/SheetViewer.vue";
 import Settings from "../components/Settings.vue";
+import DisplayMenu from "../components/DisplayMenu.vue";
 import BandSync from "../components/BandSync.vue";
 import OfflineDownload from "../components/OfflineDownload.vue";
 import InstallPrompt from "../components/InstallPrompt.vue";
